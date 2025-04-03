@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -31,8 +30,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (event === 'SIGNED_IN') {
           toast.success('Signed in successfully');
+          setTimeout(() => navigate('/dashboard'), 0);
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
+          setTimeout(() => navigate('/login'), 0);
         }
       }
     );
@@ -47,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const signIn = async (email: string, password: string) => {
     try {
