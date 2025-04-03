@@ -1,0 +1,125 @@
+
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import AuthLayout from '@/components/auth/AuthLayout';
+
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // This will be replaced with Supabase auth
+      console.log("Login with:", { email, password });
+      toast({
+        title: "Success",
+        description: "Login successful",
+      });
+      setTimeout(() => navigate('/dashboard'), 1500);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to login. Please check your credentials.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const footer = (
+    <div className="text-center w-full">
+      <p>Don't have an account? <Link to="/signup" className="text-sales-secondary hover:underline">Sign up</Link></p>
+    </div>
+  );
+  
+  return (
+    <AuthLayout 
+      title="Welcome Back"
+      description="Sign in to your account to continue"
+      footer={footer}
+    >
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <Link to="/forgot-password" className="text-sm text-sales-secondary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-10"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-gray-500" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-500" />
+              )}
+            </Button>
+          </div>
+        </div>
+        
+        <Button
+          type="submit"
+          className="w-full bg-sales-primary hover:bg-sales-text"
+          disabled={isLoading}
+        >
+          {isLoading ? "Signing in..." : "Sign In"}
+        </Button>
+      </form>
+    </AuthLayout>
+  );
+};
+
+export default Login;
