@@ -27,7 +27,7 @@ const Dashboard = () => {
           <Button 
             variant="outline" 
             onClick={signOut}
-            className="text-white border-white hover:bg-white hover:text-sales-primary"
+            className="text-white border-white hover:bg-white hover:text-sales-primary bg-sales-primary"
           >
             Logout
           </Button>

@@ -39,15 +39,6 @@ const TableSearch = () => {
       <h2 className="text-2xl font-bold text-sales-text mb-4">Database Search</h2>
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-          <TabsList>
-            <TabsTrigger value="customers">Customers</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="priceHistory">Price History</TabsTrigger>
-            <TabsTrigger value="employees">Employees</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
         <SearchInput 
           placeholder={`Search ${activeTab}...`} 
           value={searchQuery} 
@@ -56,135 +47,144 @@ const TableSearch = () => {
       </div>
       
       <div className="overflow-x-auto">
-        <TabsContent value="customers" className="mt-0">
-          <Table>
-            <TableHeader className="bg-sales-background text-sales-text">
-              <TableRow>
-                <TableHead>Customer No.</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Payment Term</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customersLoading ? (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="priceHistory">Price History</TabsTrigger>
+            <TabsTrigger value="employees">Employees</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="customers">
+            <Table>
+              <TableHeader className="bg-sales-background text-sales-text">
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4">Loading customers...</TableCell>
+                  <TableHead>Customer No.</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Payment Term</TableHead>
                 </TableRow>
-              ) : customers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4">No customers found</TableCell>
-                </TableRow>
-              ) : (
-                customers.map((customer: Customer) => (
-                  <TableRow key={customer.custno} className="border-b">
-                    <TableCell>{customer.custno}</TableCell>
-                    <TableCell>{customer.custname || '-'}</TableCell>
-                    <TableCell>{customer.address || '-'}</TableCell>
-                    <TableCell>{customer.payterm || '-'}</TableCell>
+              </TableHeader>
+              <TableBody>
+                {customersLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">Loading customers...</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TabsContent>
-        
-        <TabsContent value="products" className="mt-0">
-          <Table>
-            <TableHeader className="bg-sales-background text-sales-text">
-              <TableRow>
-                <TableHead>Product Code</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Unit</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {productsLoading ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center py-4">Loading products...</TableCell>
-                </TableRow>
-              ) : products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center py-4">No products found</TableCell>
-                </TableRow>
-              ) : (
-                products.map((product: Product) => (
-                  <TableRow key={product.prodcode} className="border-b">
-                    <TableCell>{product.prodcode}</TableCell>
-                    <TableCell>{product.description || '-'}</TableCell>
-                    <TableCell>{product.unit || '-'}</TableCell>
+                ) : customers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">No customers found</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TabsContent>
-        
-        <TabsContent value="priceHistory" className="mt-0">
-          <Table>
-            <TableHeader className="bg-sales-background text-sales-text">
-              <TableRow>
-                <TableHead>Product Code</TableHead>
-                <TableHead>Effective Date</TableHead>
-                <TableHead>Unit Price</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {priceHistoryLoading ? (
+                ) : (
+                  customers.map((customer: Customer) => (
+                    <TableRow key={customer.custno} className="border-b">
+                      <TableCell>{customer.custno}</TableCell>
+                      <TableCell>{customer.custname || '-'}</TableCell>
+                      <TableCell>{customer.address || '-'}</TableCell>
+                      <TableCell>{customer.payterm || '-'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TabsContent>
+          
+          <TabsContent value="products">
+            <Table>
+              <TableHeader className="bg-sales-background text-sales-text">
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-4">Loading price history...</TableCell>
+                  <TableHead>Product Code</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Unit</TableHead>
                 </TableRow>
-              ) : priceHistory.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center py-4">No price history found</TableCell>
-                </TableRow>
-              ) : (
-                priceHistory.map((price: PriceHistory, index) => (
-                  <TableRow key={`${price.prodcode}-${price.effdate}-${index}`} className="border-b">
-                    <TableCell>{price.prodcode}</TableCell>
-                    <TableCell>{formatDate(price.effdate)}</TableCell>
-                    <TableCell>{price.unitprice || '-'}</TableCell>
+              </TableHeader>
+              <TableBody>
+                {productsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-4">Loading products...</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TabsContent>
-        
-        <TabsContent value="employees" className="mt-0">
-          <Table>
-            <TableHeader className="bg-sales-background text-sales-text">
-              <TableRow>
-                <TableHead>Employee No.</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Birth Date</TableHead>
-                <TableHead>Hire Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employeesLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">Loading employees...</TableCell>
-                </TableRow>
-              ) : employees.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">No employees found</TableCell>
-                </TableRow>
-              ) : (
-                employees.map((employee: Employee) => (
-                  <TableRow key={employee.empno} className="border-b">
-                    <TableCell>{employee.empno}</TableCell>
-                    <TableCell>{`${employee.firstname || ''} ${employee.lastname || ''}`}</TableCell>
-                    <TableCell>{employee.gender || '-'}</TableCell>
-                    <TableCell>{formatDate(employee.birthdate)}</TableCell>
-                    <TableCell>{formatDate(employee.hiredate)}</TableCell>
+                ) : products.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-4">No products found</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TabsContent>
+                ) : (
+                  products.map((product: Product) => (
+                    <TableRow key={product.prodcode} className="border-b">
+                      <TableCell>{product.prodcode}</TableCell>
+                      <TableCell>{product.description || '-'}</TableCell>
+                      <TableCell>{product.unit || '-'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TabsContent>
+          
+          <TabsContent value="priceHistory">
+            <Table>
+              <TableHeader className="bg-sales-background text-sales-text">
+                <TableRow>
+                  <TableHead>Product Code</TableHead>
+                  <TableHead>Effective Date</TableHead>
+                  <TableHead>Unit Price</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {priceHistoryLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-4">Loading price history...</TableCell>
+                  </TableRow>
+                ) : priceHistory.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-4">No price history found</TableCell>
+                  </TableRow>
+                ) : (
+                  priceHistory.map((price: PriceHistory, index) => (
+                    <TableRow key={`${price.prodcode}-${price.effdate}-${index}`} className="border-b">
+                      <TableCell>{price.prodcode}</TableCell>
+                      <TableCell>{formatDate(price.effdate)}</TableCell>
+                      <TableCell>{price.unitprice || '-'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TabsContent>
+          
+          <TabsContent value="employees">
+            <Table>
+              <TableHeader className="bg-sales-background text-sales-text">
+                <TableRow>
+                  <TableHead>Employee No.</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Gender</TableHead>
+                  <TableHead>Birth Date</TableHead>
+                  <TableHead>Hire Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {employeesLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-4">Loading employees...</TableCell>
+                  </TableRow>
+                ) : employees.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-4">No employees found</TableCell>
+                  </TableRow>
+                ) : (
+                  employees.map((employee: Employee) => (
+                    <TableRow key={employee.empno} className="border-b">
+                      <TableCell>{employee.empno}</TableCell>
+                      <TableCell>{`${employee.firstname || ''} ${employee.lastname || ''}`}</TableCell>
+                      <TableCell>{employee.gender || '-'}</TableCell>
+                      <TableCell>{formatDate(employee.birthdate)}</TableCell>
+                      <TableCell>{formatDate(employee.hiredate)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
