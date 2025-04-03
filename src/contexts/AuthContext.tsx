@@ -1,5 +1,6 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -30,7 +32,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (event === 'SIGNED_IN') {
           toast.success('Signed in successfully');
-          setTimeout(() => navigate('/dashboard'), 0);
+          
+          // Use setTimeout to avoid potential deadlocks with Supabase auth
+          setTimeout(() => {
+            // Check if we were redirected from somewhere
+            const from = location.state?.from?.pathname || '/dashboard';
+            navigate(from, { replace: true });
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
           setTimeout(() => navigate('/login'), 0);
@@ -48,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -58,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      navigate('/dashboard');
+      // Let the onAuthStateChange handle the navigation
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign in');
       throw error;

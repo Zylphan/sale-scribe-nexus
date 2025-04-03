@@ -19,7 +19,7 @@ const Login = () => {
   // Check if user is already logged in and redirect
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
   
@@ -34,7 +34,7 @@ const Login = () => {
     
     try {
       await signIn(email, password);
-      navigate('/dashboard');
+      // AuthContext's onAuthStateChange will handle navigation
     } catch (error) {
       console.error("Login error:", error);
     } finally {
