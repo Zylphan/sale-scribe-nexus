@@ -1,49 +1,33 @@
 
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signIn } = useAuth();
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // This will be replaced with Supabase auth
-      console.log("Login with:", { email, password });
-      toast({
-        title: "Success",
-        description: "Login successful",
-      });
-      setTimeout(() => navigate('/dashboard'), 1500);
+      await signIn(email, password);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to login. Please check your credentials.",
-        variant: "destructive",
-      });
+      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }

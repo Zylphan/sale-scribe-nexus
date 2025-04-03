@@ -1,12 +1,12 @@
 
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Signup = () => {
   const [fullName, setFullName] = useState('');
@@ -15,46 +15,25 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signUp } = useAuth();
   
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!fullName || !email || !password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
       return;
     }
     
     if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // This will be replaced with Supabase auth
-      console.log("Signup with:", { fullName, email, password });
-      toast({
-        title: "Success",
-        description: "Account created successfully",
-      });
-      setTimeout(() => navigate('/dashboard'), 1500);
+      await signUp(email, password, fullName);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create account. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Signup error:", error);
     } finally {
       setIsLoading(false);
     }

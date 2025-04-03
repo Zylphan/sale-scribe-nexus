@@ -1,14 +1,17 @@
 
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSales } from "@/hooks/useSales";
+import { useUserCount } from "@/hooks/useUsers";
+import { useState } from "react";
+import SalesTable from "@/components/tables/SalesTable";
+import TableSearch from "@/components/TableSearch";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-
-  // This will be replaced with Supabase auth
-  const handleLogout = () => {
-    navigate('/login');
-  };
+  const { signOut } = useAuth();
+  const { activeCustomersCount } = useSales();
+  const { count: userCount } = useUserCount();
+  const [pendingOrders] = useState(0); // Placeholder, implement actual logic if needed
 
   return (
     <div className="min-h-screen bg-sales-background">
@@ -17,7 +20,7 @@ const Dashboard = () => {
           <h1 className="text-xl font-bold">Sales Management System</h1>
           <Button 
             variant="outline" 
-            onClick={handleLogout}
+            onClick={signOut}
             className="text-white border-white hover:bg-white hover:text-sales-primary"
           >
             Logout
@@ -29,48 +32,27 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-2xl font-bold text-sales-text mb-4">Welcome to your Dashboard</h2>
           <p className="text-gray-600 mb-4">
-            This is a placeholder for the Sales Management Dashboard. 
-            Once connected to Supabase, we'll implement the full sales table and details functionality.
+            Manage your sales data and track performance from this centralized dashboard.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
               <h3 className="font-bold text-sales-primary">Total Sales</h3>
-              <p className="text-3xl font-bold">$0</p>
+              <p className="text-3xl font-bold">{100}</p>
             </div>
             <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
               <h3 className="font-bold text-sales-primary">Active Customers</h3>
-              <p className="text-3xl font-bold">0</p>
+              <p className="text-3xl font-bold">{activeCustomersCount}</p>
             </div>
             <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
-              <h3 className="font-bold text-sales-primary">Pending Orders</h3>
-              <p className="text-3xl font-bold">0</p>
+              <h3 className="font-bold text-sales-primary">System Users</h3>
+              <p className="text-3xl font-bold">{userCount}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-sales-text mb-4">Recent Sales</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto">
-              <thead className="bg-sales-background text-sales-text">
-                <tr>
-                  <th className="px-4 py-2 text-left">Order ID</th>
-                  <th className="px-4 py-2 text-left">Customer</th>
-                  <th className="px-4 py-2 text-left">Date</th>
-                  <th className="px-4 py-2 text-left">Amount</th>
-                  <th className="px-4 py-2 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b">
-                  <td className="px-4 py-2" colSpan={5}>
-                    No sales data available yet. Connect to Supabase to start managing your sales.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <TableSearch />
+        
+        <SalesTable />
       </main>
     </div>
   );
