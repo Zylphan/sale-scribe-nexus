@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,15 +13,20 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  console.log("Login - Component rendered", { isAuthenticated: !!user, authLoading: loading });
   
   // Check if user is already logged in and redirect
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard', { replace: true });
+    if (!loading && user) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      console.log("Login - User already authenticated, redirecting to:", from);
+      navigate(from, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate, location]);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +35,7 @@ const Login = () => {
       return;
     }
     
+    console.log("Login - Attempting login with email:", email);
     setIsLoading(true);
     
     try {
@@ -41,6 +47,11 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
+  // Don't render the login form if we're checking auth or if the user is already authenticated
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
   
   const footer = (
     <div className="text-center w-full">

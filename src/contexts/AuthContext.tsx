@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -23,10 +22,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("AuthProvider - Current route:", location.pathname);
+
   useEffect(() => {
+    console.log("AuthProvider - Setting up auth state listener");
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("AuthProvider - Auth state changed:", event);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -37,26 +41,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setTimeout(() => {
             // Check if we were redirected from somewhere
             const from = location.state?.from?.pathname || '/dashboard';
+            console.log("AuthProvider - Redirecting after sign in to:", from);
             navigate(from, { replace: true });
           }, 0);
         } else if (event === 'SIGNED_OUT') {
           toast.info('Signed out');
-          setTimeout(() => navigate('/login'), 0);
+          setTimeout(() => {
+            console.log("AuthProvider - Redirecting after sign out to: /login");
+            navigate('/login');
+          }, 0);
         }
       }
     );
 
     // THEN check for existing session
+    console.log("AuthProvider - Checking for existing session");
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("AuthProvider - Session check result:", { hasSession: !!session });
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     return () => {
+      console.log("AuthProvider - Cleaning up auth subscription");
       subscription.unsubscribe();
     };
-  }, [navigate, location]);
+  }, [navigate, location.pathname]);
 
   const signIn = async (email: string, password: string) => {
     try {
