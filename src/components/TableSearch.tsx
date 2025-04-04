@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SearchInput from './SearchInput';
-import { Sale, useSales, useSalesDetails } from '@/hooks/useSales';
+import { Sale, useSales } from '@/hooks/useSales';
+import { SalesDetail, useSalesDetails } from '@/hooks/useSalesDetails';
 import { 
   Table, 
   TableBody, 

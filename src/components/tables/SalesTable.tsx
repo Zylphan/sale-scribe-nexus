@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
-import { Sale, useSales, useSalesDetails } from '@/hooks/useSales';
+import { Sale, useSales } from '@/hooks/useSales';
+import { SalesDetail, useSalesDetails } from '@/hooks/useSalesDetails';
 import { 
   Table, 
   TableBody, 
