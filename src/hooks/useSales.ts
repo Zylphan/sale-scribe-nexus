@@ -87,60 +87,49 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
       try {
         setLoading(true);
         
-        // Create a more complex query with joins to get related information
-        const query = `
-          salesdetail(
-            transno, prodcode, quantity,
-            product:product(description, unit),
-            pricehist:pricehist(unitprice)
-          ),
-          sales:sales(
-            customer:customer(custname),
-            employee:employee(firstname, lastname)
-          )
-        `;
+        // Modified query to fetch just the sales details without joins to removed tables
+        const { data: salesDetailsData, error: detailsError } = await supabase
+          .from('salesdetail')
+          .select('*')
+          .eq('transno', transno);
         
-        const { data: salesData, error: salesError } = await supabase
-          .from('sales')
-          .select(query)
-          .eq('transno', transno)
-          .single();
-        
-        if (salesError) {
-          throw salesError;
+        if (detailsError) {
+          throw detailsError;
         }
         
-        // Process the nested data to create a flat structure for the UI
-        const salesdetails = salesData?.salesdetail || [];
-        const processedDetails: SalesDetail[] = salesdetails.map((detail: any) => {
-          let detailWithRelated: SalesDetail = {
+        // Also fetch the sale record to get customer and employee info
+        const { data: saleData, error: saleError } = await supabase
+          .from('sales')
+          .select('*')
+          .eq('transno', transno)
+          .single();
+          
+        if (saleError) {
+          console.error("Error fetching sale:", saleError);
+          // Continue even if we can't get sale data
+        }
+        
+        // Process the data to create a structure similar to before
+        const processedDetails: SalesDetail[] = salesDetailsData.map((detail: any) => {
+          return {
             transno: detail.transno,
             prodcode: detail.prodcode,
             quantity: detail.quantity,
-            product_description: detail.product?.description || null,
-            product_unit: detail.product?.unit || null,
-            unit_price: detail.pricehist?.[0]?.unitprice || null,
+            // For these fields which came from the now-removed tables,
+            // we'll just use the IDs from the sales table
+            product_description: detail.prodcode, // Using product code as description
+            product_unit: null,
+            unit_price: null,
+            customer_name: saleData?.custno || null,
+            employee_name: saleData?.empno || null
           };
-          
-          // Add customer and employee information
-          if (salesData?.sales) {
-            detailWithRelated.customer_name = salesData.sales.customer?.custname || null;
-            
-            const firstName = salesData.sales.employee?.firstname || '';
-            const lastName = salesData.sales.employee?.lastname || '';
-            detailWithRelated.employee_name = firstName || lastName ? `${firstName} ${lastName}`.trim() : null;
-          }
-          
-          return detailWithRelated;
         });
         
         // Filter by search query if provided
         let filteredDetails = processedDetails;
         if (searchQuery) {
           filteredDetails = processedDetails.filter(detail => 
-            detail.prodcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (detail.product_description && 
-             detail.product_description.toLowerCase().includes(searchQuery.toLowerCase()))
+            detail.prodcode.toLowerCase().includes(searchQuery.toLowerCase())
           );
         }
         
