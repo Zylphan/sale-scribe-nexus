@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -194,7 +195,7 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
             employee_name: employeeData ? 
               `${employeeData.firstname || ''} ${employeeData.lastname || ''}`.trim() || 
               saleData?.empno || null
-          }
+          }; // Fixed: Added the semicolon here
         });
         
         // Filter by search query if provided
