@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -87,7 +86,6 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
       try {
         setLoading(true);
         
-        // Fetch salesdetail records with product information
         const { data: salesDetailsData, error: detailsError } = await supabase
           .from('salesdetail')
           .select('*')
@@ -97,7 +95,6 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
           throw detailsError;
         }
         
-        // Fetch the sale record to get customer and employee info
         const { data: saleData, error: saleError } = await supabase
           .from('sales')
           .select('*')
@@ -106,10 +103,8 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
           
         if (saleError) {
           console.error("Error fetching sale:", saleError);
-          // Continue even if we can't get sale data
         }
         
-        // Fetch customer information if we have a customer number
         let customerData = null;
         if (saleData?.custno) {
           const { data: customer, error: customerError } = await supabase
@@ -125,7 +120,6 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
           }
         }
         
-        // Fetch employee information if we have an employee number
         let employeeData = null;
         if (saleData?.empno) {
           const { data: employee, error: employeeError } = await supabase
@@ -141,13 +135,10 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
           }
         }
         
-        // Create a map to hold product details for better lookup performance
         const productDetails = new Map();
         const priceDetails = new Map();
         
-        // For each product in the sales details, fetch product and price info
         for (const detail of salesDetailsData) {
-          // Fetch product information
           if (!productDetails.has(detail.prodcode)) {
             const { data: product, error: productError } = await supabase
               .from('product')
@@ -162,7 +153,6 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
             }
           }
           
-          // Fetch latest price information for the product
           if (!priceDetails.has(detail.prodcode)) {
             const { data: prices, error: priceError } = await supabase
               .from('pricehist')
@@ -179,7 +169,6 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
           }
         }
         
-        // Process the data to create a structure with all the information
         const processedDetails: SalesDetail[] = salesDetailsData.map((detail: any) => {
           const product = productDetails.get(detail.prodcode);
           const price = priceDetails.get(detail.prodcode);
@@ -195,10 +184,9 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
             employee_name: employeeData ? 
               `${employeeData.firstname || ''} ${employeeData.lastname || ''}`.trim() || 
               saleData?.empno || null
-          }; // Fixed: Added the semicolon here
+          }
         });
         
-        // Filter by search query if provided
         let filteredDetails = processedDetails;
         if (searchQuery) {
           filteredDetails = processedDetails.filter(detail => 
