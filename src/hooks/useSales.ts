@@ -87,7 +87,7 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
       try {
         setLoading(true);
         
-        // Modified query to fetch just the sales details without joins to removed tables
+        // Fetch salesdetail records with product information
         const { data: salesDetailsData, error: detailsError } = await supabase
           .from('salesdetail')
           .select('*')
@@ -97,7 +97,7 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
           throw detailsError;
         }
         
-        // Also fetch the sale record to get customer and employee info
+        // Fetch the sale record to get customer and employee info
         const { data: saleData, error: saleError } = await supabase
           .from('sales')
           .select('*')
@@ -109,19 +109,92 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
           // Continue even if we can't get sale data
         }
         
-        // Process the data to create a structure similar to before
+        // Fetch customer information if we have a customer number
+        let customerData = null;
+        if (saleData?.custno) {
+          const { data: customer, error: customerError } = await supabase
+            .from('customer')
+            .select('*')
+            .eq('custno', saleData.custno)
+            .single();
+            
+          if (customerError) {
+            console.error("Error fetching customer:", customerError);
+          } else {
+            customerData = customer;
+          }
+        }
+        
+        // Fetch employee information if we have an employee number
+        let employeeData = null;
+        if (saleData?.empno) {
+          const { data: employee, error: employeeError } = await supabase
+            .from('employee')
+            .select('*')
+            .eq('empno', saleData.empno)
+            .single();
+            
+          if (employeeError) {
+            console.error("Error fetching employee:", employeeError);
+          } else {
+            employeeData = employee;
+          }
+        }
+        
+        // Create a map to hold product details for better lookup performance
+        const productDetails = new Map();
+        const priceDetails = new Map();
+        
+        // For each product in the sales details, fetch product and price info
+        for (const detail of salesDetailsData) {
+          // Fetch product information
+          if (!productDetails.has(detail.prodcode)) {
+            const { data: product, error: productError } = await supabase
+              .from('product')
+              .select('*')
+              .eq('prodcode', detail.prodcode)
+              .single();
+              
+            if (productError) {
+              console.error(`Error fetching product ${detail.prodcode}:`, productError);
+            } else if (product) {
+              productDetails.set(detail.prodcode, product);
+            }
+          }
+          
+          // Fetch latest price information for the product
+          if (!priceDetails.has(detail.prodcode)) {
+            const { data: prices, error: priceError } = await supabase
+              .from('pricehist')
+              .select('*')
+              .eq('prodcode', detail.prodcode)
+              .order('effdate', { ascending: false })
+              .limit(1);
+              
+            if (priceError) {
+              console.error(`Error fetching price for ${detail.prodcode}:`, priceError);
+            } else if (prices && prices.length > 0) {
+              priceDetails.set(detail.prodcode, prices[0]);
+            }
+          }
+        }
+        
+        // Process the data to create a structure with all the information
         const processedDetails: SalesDetail[] = salesDetailsData.map((detail: any) => {
+          const product = productDetails.get(detail.prodcode);
+          const price = priceDetails.get(detail.prodcode);
+          
           return {
             transno: detail.transno,
             prodcode: detail.prodcode,
             quantity: detail.quantity,
-            // For these fields which came from the now-removed tables,
-            // we'll just use the IDs from the sales table
-            product_description: detail.prodcode, // Using product code as description
-            product_unit: null,
-            unit_price: null,
-            customer_name: saleData?.custno || null,
-            employee_name: saleData?.empno || null
+            product_description: product?.description || detail.prodcode,
+            product_unit: product?.unit || null,
+            unit_price: price?.unitprice || null,
+            customer_name: customerData?.custname || saleData?.custno || null,
+            employee_name: employeeData ? 
+              `${employeeData.firstname || ''} ${employeeData.lastname || ''}`.trim() || 
+              saleData?.empno || null
           };
         });
         
@@ -129,7 +202,8 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
         let filteredDetails = processedDetails;
         if (searchQuery) {
           filteredDetails = processedDetails.filter(detail => 
-            detail.prodcode.toLowerCase().includes(searchQuery.toLowerCase())
+            detail.prodcode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (detail.product_description && detail.product_description.toLowerCase().includes(searchQuery.toLowerCase()))
           );
         }
         

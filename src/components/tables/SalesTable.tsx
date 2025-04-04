@@ -101,7 +101,7 @@ const SalesTable = () => {
             <div className="mt-4">
               <div className="mb-4">
                 <SearchInput 
-                  placeholder="Search by product code" 
+                  placeholder="Search by product code or description" 
                   value={detailsSearchQuery} 
                   onChange={setDetailsSearchQuery} 
                 />
