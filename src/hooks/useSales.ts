@@ -184,7 +184,7 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
             employee_name: employeeData ? 
               `${employeeData.firstname || ''} ${employeeData.lastname || ''}`.trim() || 
               saleData?.empno || null
-          }
+          };
         });
         
         let filteredDetails = processedDetails;
