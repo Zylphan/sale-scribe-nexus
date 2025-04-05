@@ -112,9 +112,9 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
             product_unit: product?.unit || null,
             unit_price: price?.unitprice || null,
             customer_name: customerData?.custname || saleData?.custno || null,
-            employee_name: employeeData ? 
-              `${employeeData.firstname || ''} ${employeeData.lastname || ''}`.trim() || 
-              saleData?.empno || null
+            employee_name: employeeData 
+              ? `${employeeData.firstname || ''} ${employeeData.lastname || ''}`.trim() || saleData?.empno || null
+              : saleData?.empno || null
           };
         });
         
