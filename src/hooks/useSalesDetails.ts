@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { SalesDetail } from './types/sales';
+import type { SalesDetail } from './types/sales';
 
-export { SalesDetail } from './types/sales';
+export type { SalesDetail } from './types/sales';
 
 export function useSalesDetails(transno: string, searchQuery: string = '') {
   const [salesDetails, setSalesDetails] = useState<SalesDetail[]>([]);
