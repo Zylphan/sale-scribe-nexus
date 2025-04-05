@@ -12,30 +12,37 @@ export function useUserCount() {
       try {
         setLoading(true);
         
-        // Try to get actual user count from the auth.users table using admin APIs
-        const { count: userCount, error } = await supabase
-          .from('auth.users')
-          .select('*', { count: 'exact', head: true });
+        // We can't directly query auth.users with the client
+        // Instead, use the admin API or fetch the count through the auth API
         
-        if (error) {
-          // If cannot access the admin API, fallback to a public function or endpoint
-          // For now, show a console error and fallback to current user
-          console.error("Error fetching auth users count:", error.message);
-          
-          // Check if the current user is authenticated
-          const { data: session } = await supabase.auth.getSession();
-          setCount(session?.session ? 1 : 0);
+        // Get count of authenticated users through admin API URL
+        const { count: adminCount, error: adminError } = await supabase.rpc('get_auth_user_count');
+        
+        if (!adminError && adminCount !== null) {
+          setCount(adminCount);
           return;
         }
         
-        setCount(userCount || 0);
+        // If that fails, fall back to checking current session
+        console.error("Could not get user count:", adminError?.message);
+        console.log("Falling back to session check");
+        
+        // Check if the current user is authenticated
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          // If we have a session, at least count the current user
+          setCount(1);
+        } else {
+          setCount(0);
+        }
       } catch (error: any) {
         console.error("Error fetching user count:", error.message);
         toast.error(`Error fetching user count: ${error.message}`);
         
         // Fallback to at least counting the current user
-        const { data: session } = await supabase.auth.getSession();
-        setCount(session?.session ? 1 : 0);
+        const { data: { session } } = await supabase.auth.getSession();
+        setCount(session ? 1 : 0);
       } finally {
         setLoading(false);
       }

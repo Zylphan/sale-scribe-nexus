@@ -72,14 +72,26 @@ export function useSales(searchQuery: string = '') {
         };
       } catch (error) {
         console.error("Error setting up presence:", error);
+        return () => {}; // Return empty cleanup function in case of error
       }
     };
 
     fetchSales();
-    const cleanup = trackPresence();
+    
+    // Execute the trackPresence function and store its return value
+    const cleanupPresence = trackPresence();
     
     return () => {
-      if (cleanup) cleanup();
+      // Use the cleanup function directly
+      if (cleanupPresence) {
+        // Since cleanupPresence is a Promise<() => void>, 
+        // we need to handle it properly
+        cleanupPresence.then(cleanup => {
+          if (cleanup) cleanup();
+        }).catch(err => {
+          console.error("Error during presence cleanup:", err);
+        });
+      }
     };
   }, [searchQuery]);
 
