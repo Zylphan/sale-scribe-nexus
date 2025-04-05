@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Sale, useSales } from '@/hooks/useSales';
+import { Sale, useSales, SortColumn, SortDirection } from '@/hooks/useSales';
 import { SalesDetail, useSalesDetails } from '@/hooks/useSalesDetails';
 import { 
   Table, 
@@ -19,13 +19,37 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 const SalesTable = () => {
-  const { sales, loading, activeCustomersCount } = useSales();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('salesdate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  
+  const { sales, loading } = useSales(searchQuery, sortColumn, sortDirection);
   const [selectedSale, setSelectedSale] = useState<string | null>(null);
   const [detailsSearchQuery, setDetailsSearchQuery] = useState('');
   const { salesDetails, loading: detailsLoading } = useSalesDetails(selectedSale || '', detailsSearchQuery);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  const handleSort = (column: SortColumn) => {
+    if (column === sortColumn) {
+      // Toggle the sort direction
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set the new sort column and default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Helper function to render the sort icon
+  const renderSortIcon = (column: SortColumn) => {
+    if (column === sortColumn) {
+      return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+    }
+    return null;
+  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
@@ -54,10 +78,38 @@ const SalesTable = () => {
           <Table>
             <TableHeader className="bg-sales-background text-sales-text">
               <TableRow>
-                <TableHead className="px-4 py-2">Order ID</TableHead>
-                <TableHead className="px-4 py-2">Date</TableHead>
-                <TableHead className="px-4 py-2">Customer</TableHead>
-                <TableHead className="px-4 py-2">Employee</TableHead>
+                <TableHead 
+                  onClick={() => handleSort('transno')} 
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-1">
+                    Order ID {renderSortIcon('transno')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  onClick={() => handleSort('salesdate')} 
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-1">
+                    Date {renderSortIcon('salesdate')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  onClick={() => handleSort('custno')} 
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-1">
+                    Customer {renderSortIcon('custno')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  onClick={() => handleSort('empno')} 
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-1">
+                    Employee {renderSortIcon('empno')}
+                  </div>
+                </TableHead>
                 <TableHead className="px-4 py-2">Actions</TableHead>
               </TableRow>
             </TableHeader>

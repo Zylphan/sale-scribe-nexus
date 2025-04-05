@@ -6,7 +6,11 @@ import type { Sale } from './types/sales';
 
 export type { Sale } from './types/sales';
 
-export function useSales(searchQuery: string = '') {
+export type SortDirection = 'asc' | 'desc';
+
+export type SortColumn = 'transno' | 'salesdate' | 'custno' | 'empno';
+
+export function useSales(searchQuery: string = '', sortColumn: SortColumn = 'salesdate', sortDirection: SortDirection = 'desc') {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCustomersCount, setActiveCustomersCount] = useState<number>(0);
@@ -40,7 +44,10 @@ export function useSales(searchQuery: string = '') {
           `);
         }
         
-        const { data, error } = await query.order('salesdate', { ascending: false });
+        // Add sorting
+        query = query.order(sortColumn, { ascending: sortDirection === 'asc' });
+        
+        const { data, error } = await query;
         
         if (error) {
           throw error;
@@ -110,7 +117,7 @@ export function useSales(searchQuery: string = '') {
         });
       }
     };
-  }, [searchQuery]);
+  }, [searchQuery, sortColumn, sortDirection]);
 
   return { sales, loading, activeCustomersCount, totalSales };
 }
