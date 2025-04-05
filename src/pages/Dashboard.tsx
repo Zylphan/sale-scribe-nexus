@@ -4,14 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSales } from "@/hooks/useSales";
 import { useUserCount } from "@/hooks/useUsers";
 import { useState, useEffect } from "react";
-import SalesTable from "@/components/tables/SalesTable";
 import TableSearch from "@/components/TableSearch";
 
 const Dashboard = () => {
   const { signOut, user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
   const { activeCustomersCount, loading: salesLoading } = useSales();
   const { count: userCount, loading: userCountLoading } = useUserCount();
-  const [pendingOrders] = useState(0); // Placeholder, implement actual logic if needed
 
   useEffect(() => {
     console.log("Dashboard rendered, user:", user?.id);
@@ -40,31 +39,25 @@ const Dashboard = () => {
           <p className="text-gray-600 mb-4">
             Manage your sales data and track performance from this centralized dashboard.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
-              <h3 className="font-bold text-sales-primary">Total Sales</h3>
-              <p className="text-3xl font-bold">
-                {salesLoading ? 'Loading...' : 100}
-              </p>
-            </div>
-            <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
-              <h3 className="font-bold text-sales-primary">Active Customers</h3>
+              <h3 className="font-bold text-sales-primary">Active Users</h3>
               <p className="text-3xl font-bold">
                 {salesLoading ? 'Loading...' : activeCustomersCount}
               </p>
+              <p className="text-sm text-gray-500">Users currently online</p>
             </div>
             <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
               <h3 className="font-bold text-sales-primary">System Users</h3>
               <p className="text-3xl font-bold">
                 {userCountLoading ? 'Loading...' : userCount}
               </p>
+              <p className="text-sm text-gray-500">Total registered users</p>
             </div>
           </div>
         </div>
         
         <TableSearch />
-        
-        <SalesTable />
       </main>
     </div>
   );

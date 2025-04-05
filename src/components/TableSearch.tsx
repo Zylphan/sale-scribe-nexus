@@ -54,11 +54,11 @@ const TableSearch = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-2xl font-bold text-sales-text mb-4">Database Search</h2>
+      <h2 className="text-2xl font-bold text-sales-text mb-4">Sales Search</h2>
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <SearchInput 
-          placeholder="Search sales..." 
+          placeholder="Search by date, order ID, customer or employee..." 
           value={searchQuery} 
           onChange={handleSearch}
         />

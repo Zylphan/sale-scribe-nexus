@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function useUserCount() {
   const [count, setCount] = useState<number>(0);
@@ -11,18 +12,30 @@ export function useUserCount() {
       try {
         setLoading(true);
         
-        const { data, error } = await supabase.auth.admin.listUsers();
+        // Try to get actual user count from the auth.users table using admin APIs
+        const { count: userCount, error } = await supabase
+          .from('auth.users')
+          .select('*', { count: 'exact', head: true });
         
         if (error) {
-          console.error("Error fetching user count:", error.message);
+          // If cannot access the admin API, fallback to a public function or endpoint
+          // For now, show a console error and fallback to current user
+          console.error("Error fetching auth users count:", error.message);
+          
+          // Check if the current user is authenticated
+          const { data: session } = await supabase.auth.getSession();
+          setCount(session?.session ? 1 : 0);
           return;
         }
         
-        // If we can't access admin functions, let's use a fallback count (1 for the current user)
-        setCount(data?.users?.length || 1);
-      } catch (error) {
+        setCount(userCount || 0);
+      } catch (error: any) {
+        console.error("Error fetching user count:", error.message);
+        toast.error(`Error fetching user count: ${error.message}`);
+        
         // Fallback to at least counting the current user
-        setCount(1);
+        const { data: session } = await supabase.auth.getSession();
+        setCount(session?.session ? 1 : 0);
       } finally {
         setLoading(false);
       }
