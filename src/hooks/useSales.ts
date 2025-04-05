@@ -36,12 +36,10 @@ export function useSales(searchQuery: string = '', sortColumn: SortColumn = 'sal
         let query = supabase.from('sales').select('*');
         
         if (searchQuery) {
-          query = query.or(`
-            transno.ilike.%${searchQuery}%,
-            custno.ilike.%${searchQuery}%,
-            empno.ilike.%${searchQuery}%,
-            salesdate::text.ilike.%${searchQuery}%
-          `);
+          // Fixed search logic: use individual conditions instead of a complex OR statement
+          query = query.or(
+            `transno.ilike.%${searchQuery}%,custno.ilike.%${searchQuery}%,empno.ilike.%${searchQuery}%`
+          ).or(`salesdate::text.ilike.%${searchQuery}%`);
         }
         
         // Add sorting
