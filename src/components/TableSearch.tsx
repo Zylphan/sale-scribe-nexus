@@ -58,7 +58,7 @@ const TableSearch = () => {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <SearchInput 
-          placeholder="Search by date, order ID, customer or employee..." 
+          placeholder="Search by order ID, date, customer or employee..." 
           value={searchQuery} 
           onChange={handleSearch}
         />
@@ -71,27 +71,27 @@ const TableSearch = () => {
           </TabsList>
           
           <TabsContent value="sales">
-            <Table>
-              <TableHeader className="bg-sales-background text-sales-text">
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salesLoading ? (
+            {salesLoading ? (
+              <div className="text-center py-8">Loading sales...</div>
+            ) : sales.length === 0 ? (
+              <div className="text-center py-8">
+                {searchQuery ? 
+                  `No sales found for search "${searchQuery}"` : 
+                  "No sales found"}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader className="bg-sales-background text-sales-text">
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">Loading sales...</TableCell>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ) : sales.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">No sales found</TableCell>
-                  </TableRow>
-                ) : (
-                  sales.map((sale) => (
+                </TableHeader>
+                <TableBody>
+                  {sales.map((sale) => (
                     <TableRow key={sale.transno} className="border-b">
                       <TableCell>{sale.transno}</TableCell>
                       <TableCell>{formatDate(sale.salesdate)}</TableCell>
@@ -108,10 +108,10 @@ const TableSearch = () => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </TabsContent>
         </Tabs>
       </div>

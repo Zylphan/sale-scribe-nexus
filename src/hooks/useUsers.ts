@@ -12,31 +12,31 @@ export function useUserCount() {
       try {
         setLoading(true);
         
-        // We need to use a different approach since we can't directly query auth.users
-        // or use an RPC function that doesn't exist in the type definitions
-        
+        // Custom function approach
         try {
-          // Try to use a custom function if it exists
-          // @ts-ignore - Ignoring TypeScript error since the function might exist at runtime
-          const { data, error } = await supabase.rpc('get_auth_user_count');
+          // Using the edge function to get the user count
+          const { data, error } = await supabase.functions.invoke('get-user-count');
           
-          if (!error && data !== null) {
-            setCount(data);
+          if (!error && data && typeof data.count === 'number') {
+            setCount(data.count);
             return;
+          } else {
+            console.error("Edge function error:", error || "No count returned");
           }
-        } catch (rpcError) {
-          console.error("RPC function error:", rpcError);
+        } catch (fnError) {
+          console.error("Function invocation error:", fnError);
         }
         
-        // If the above approach fails, fall back to checking current session
+        // Fallback: Check current session and use a default value
         console.log("Falling back to session check");
         
         // Check if the current user is authenticated
         const { data: { session } } = await supabase.auth.getSession();
         
+        // If we have a session, use a default minimum count
         if (session) {
-          // If we have a session, at least count the current user
-          setCount(1);
+          setCount(1);  // At least one user exists (the current user)
+          toast.info("Using fallback user count. Actual count may be higher.");
         } else {
           setCount(0);
         }

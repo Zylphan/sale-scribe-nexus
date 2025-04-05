@@ -1,1 +1,25 @@
+
 project_id = "tnewnhmliqzaxveettrn"
+
+[api]
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323
+
+[auth]
+enabled = true
+
+[storage]
+enabled = true
+
+[functions]
+[functions.get-user-count]
+verify_jwt = true

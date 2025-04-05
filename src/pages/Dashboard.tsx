@@ -9,14 +9,15 @@ import TableSearch from "@/components/TableSearch";
 const Dashboard = () => {
   const { signOut, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const { activeCustomersCount, loading: salesLoading } = useSales();
+  const { activeCustomersCount, totalSales, loading: salesLoading } = useSales();
   const { count: userCount, loading: userCountLoading } = useUserCount();
 
   useEffect(() => {
     console.log("Dashboard rendered, user:", user?.id);
     console.log("Active customers count:", activeCustomersCount);
     console.log("User count:", userCount);
-  }, [user, activeCustomersCount, userCount]);
+    console.log("Total sales:", totalSales);
+  }, [user, activeCustomersCount, userCount, totalSales]);
 
   return (
     <div className="min-h-screen bg-sales-background">
@@ -39,7 +40,7 @@ const Dashboard = () => {
           <p className="text-gray-600 mb-4">
             Manage your sales data and track performance from this centralized dashboard.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
               <h3 className="font-bold text-sales-primary">Active Users</h3>
               <p className="text-3xl font-bold">
@@ -53,6 +54,13 @@ const Dashboard = () => {
                 {userCountLoading ? 'Loading...' : userCount}
               </p>
               <p className="text-sm text-gray-500">Total registered users</p>
+            </div>
+            <div className="bg-sales-background rounded-lg p-4 border border-gray-200">
+              <h3 className="font-bold text-sales-primary">Total Sales</h3>
+              <p className="text-3xl font-bold">
+                {salesLoading ? 'Loading...' : totalSales}
+              </p>
+              <p className="text-sm text-gray-500">Number of sales orders</p>
             </div>
           </div>
         </div>

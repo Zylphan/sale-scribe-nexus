@@ -10,16 +10,34 @@ export function useSales(searchQuery: string = '') {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCustomersCount, setActiveCustomersCount] = useState<number>(0);
+  const [totalSales, setTotalSales] = useState<number>(0);
 
   useEffect(() => {
     const fetchSales = async () => {
       try {
         setLoading(true);
         
+        // First, get total count of sales regardless of search query
+        const { count: totalCount, error: countError } = await supabase
+          .from('sales')
+          .select('*', { count: 'exact', head: true });
+        
+        if (countError) {
+          console.error("Error counting sales:", countError);
+        } else {
+          setTotalSales(totalCount || 0);
+        }
+        
+        // Then perform the search query
         let query = supabase.from('sales').select('*');
         
         if (searchQuery) {
-          query = query.or(`transno.ilike.%${searchQuery}%,custno.ilike.%${searchQuery}%,empno.ilike.%${searchQuery}%,salesdate::text.ilike.%${searchQuery}%`);
+          query = query.or(`
+            transno.ilike.%${searchQuery}%,
+            custno.ilike.%${searchQuery}%,
+            empno.ilike.%${searchQuery}%,
+            salesdate::text.ilike.%${searchQuery}%
+          `);
         }
         
         const { data, error } = await query.order('salesdate', { ascending: false });
@@ -64,9 +82,10 @@ export function useSales(searchQuery: string = '') {
           setActiveCustomersCount(userCount);
         });
         
-        // Clean up function
+        // Return a cleanup function
         return () => {
-          channel.untrack().then(() => {
+          // Need to use a Promise here
+          return channel.untrack().then(() => {
             supabase.removeChannel(channel);
           });
         };
@@ -79,14 +98,12 @@ export function useSales(searchQuery: string = '') {
     fetchSales();
     
     // Execute the trackPresence function and store its return value
-    const cleanupPresence = trackPresence();
+    const cleanupPromise = trackPresence();
     
     return () => {
-      // Use the cleanup function directly
-      if (cleanupPresence) {
-        // Since cleanupPresence is a Promise<() => void>, 
-        // we need to handle it properly
-        cleanupPresence.then(cleanup => {
+      // Handle the cleanup promise properly
+      if (cleanupPromise) {
+        cleanupPromise.then(cleanup => {
           if (cleanup) cleanup();
         }).catch(err => {
           console.error("Error during presence cleanup:", err);
@@ -95,5 +112,5 @@ export function useSales(searchQuery: string = '') {
     };
   }, [searchQuery]);
 
-  return { sales, loading, activeCustomersCount };
+  return { sales, loading, activeCustomersCount, totalSales };
 }
