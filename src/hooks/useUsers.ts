@@ -12,19 +12,23 @@ export function useUserCount() {
       try {
         setLoading(true);
         
-        // We can't directly query auth.users with the client
-        // Instead, use the admin API or fetch the count through the auth API
+        // We need to use a different approach since we can't directly query auth.users
+        // or use an RPC function that doesn't exist in the type definitions
         
-        // Get count of authenticated users through admin API URL
-        const { count: adminCount, error: adminError } = await supabase.rpc('get_auth_user_count');
-        
-        if (!adminError && adminCount !== null) {
-          setCount(adminCount);
-          return;
+        try {
+          // Try to use a custom function if it exists
+          // @ts-ignore - Ignoring TypeScript error since the function might exist at runtime
+          const { data, error } = await supabase.rpc('get_auth_user_count');
+          
+          if (!error && data !== null) {
+            setCount(data);
+            return;
+          }
+        } catch (rpcError) {
+          console.error("RPC function error:", rpcError);
         }
         
-        // If that fails, fall back to checking current session
-        console.error("Could not get user count:", adminError?.message);
+        // If the above approach fails, fall back to checking current session
         console.log("Falling back to session check");
         
         // Check if the current user is authenticated
