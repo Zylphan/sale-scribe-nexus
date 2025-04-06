@@ -36,10 +36,20 @@ export function useSales(searchQuery: string = '', sortColumn: SortColumn = 'sal
         let query = supabase.from('sales').select('*');
         
         if (searchQuery) {
-          // Fixed search logic: use individual conditions instead of a complex OR statement
+          // Fixed search logic: use separate filter conditions instead of a complex OR statement
           query = query.or(
             `transno.ilike.%${searchQuery}%,custno.ilike.%${searchQuery}%,empno.ilike.%${searchQuery}%`
-          ).or(`salesdate::text.ilike.%${searchQuery}%`);
+          );
+          
+          // The problem was here - we need a separate filter for dates
+          if (searchQuery.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // If searchQuery looks like a date in YYYY-MM-DD format
+            query = query.or(`salesdate::text.eq.${searchQuery}`);
+          } else if (searchQuery.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+            // If searchQuery looks like a date in MM/DD/YYYY format, we would need to convert
+            // This is a simplified approach - you might need more robust date parsing
+            query = query.or(`salesdate::text.ilike.%${searchQuery}%`);
+          }
         }
         
         // Add sorting
