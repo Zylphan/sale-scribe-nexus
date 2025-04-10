@@ -61,7 +61,7 @@ const Login = () => {
   
   return (
     <AuthLayout 
-      title="Welcome to Stark Industries -Avengers"
+      title="Welcome to Stark Industries by Avengers"
       description="Sign in to your account to continue"
       footer={footer}
     >
