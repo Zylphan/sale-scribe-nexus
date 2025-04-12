@@ -7,6 +7,7 @@ import { Table } from '@/components/ui/table';
 import SalesTableHeader from './sales/SalesTableHeader';
 import SalesTableList from './sales/SalesTableList';
 import SalesDetailsDialog from './sales/SalesDetailsDialog';
+import AddSaleDialog from './sales/AddSaleDialog';
 
 const TableSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,6 +38,12 @@ const TableSearch = () => {
     setIsDetailsOpen(true);
   };
 
+  const handleRefreshSales = () => {
+    // Reloading the data will be handled by useSales hook automatically
+    // Just need to trigger a re-render
+    setSortColumn(sortColumn);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <h2 className="text-2xl font-bold text-sales-text mb-4">Sales Search</h2>
@@ -47,6 +54,8 @@ const TableSearch = () => {
           value={searchQuery} 
           onChange={handleSearch}
         />
+        
+        <AddSaleDialog onSaleAdded={handleRefreshSales} />
       </div>
       
       <div className="overflow-x-auto">
@@ -76,6 +85,7 @@ const TableSearch = () => {
         isOpen={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
         transactionId={selectedSale}
+        onRefresh={handleRefreshSales}
       />
     </div>
   );
