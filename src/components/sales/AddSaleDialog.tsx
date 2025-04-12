@@ -28,7 +28,13 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       empno
     };
     
-    const result = await addSale(saleData, details);
+    // Filter out unitprice from details since it's not in the database schema
+    const formattedDetails = details.map((detail: any) => ({
+      prodcode: detail.prodcode,
+      quantity: detail.quantity
+    }));
+    
+    const result = await addSale(saleData, formattedDetails);
     
     if (result) {
       setIsOpen(false);

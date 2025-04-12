@@ -35,8 +35,10 @@ export function useSalesOperations() {
       
       // Insert all sale details
       const detailsWithTransno = details.map(detail => ({
-        ...detail,
-        transno
+        transno,
+        prodcode: detail.prodcode,
+        quantity: detail.quantity
+        // Remove unitprice field as it doesn't exist in salesdetail table
       }));
       
       const { error: detailsError } = await supabase
@@ -124,8 +126,10 @@ export function useSalesOperations() {
       
       // Insert new sale details
       const detailsWithTransno = details.map(detail => ({
-        ...detail,
-        transno
+        transno,
+        prodcode: detail.prodcode,
+        quantity: detail.quantity
+        // Remove unitprice field as it doesn't exist in salesdetail table
       }));
       
       const { error: detailsError } = await supabase

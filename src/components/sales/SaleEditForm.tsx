@@ -111,6 +111,7 @@ export default function SaleEditForm({
       const { transno, ...saleData } = data;
       
       // Ensure all required fields are present in the details array
+      // And remove unitprice which isn't in the database schema
       const formattedDetails = data.details.map(detail => ({
         prodcode: detail.prodcode,
         quantity: detail.quantity
