@@ -16,4 +16,5 @@ export interface SalesDetail {
   unit_price?: number | null;
   customer_name?: string | null;
   employee_name?: string | null;
+  salesdate?: string | null;
 }

@@ -114,7 +114,8 @@ export function useSalesDetails(transno: string, searchQuery: string = '') {
             customer_name: customerData?.custname || saleData?.custno || null,
             employee_name: employeeData 
               ? `${employeeData.firstname || ''} ${employeeData.lastname || ''}`.trim() || saleData?.empno || null
-              : saleData?.empno || null
+              : saleData?.empno || null,
+            salesdate: saleData?.salesdate || null
           };
         });
         

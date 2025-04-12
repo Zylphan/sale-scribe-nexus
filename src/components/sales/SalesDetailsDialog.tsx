@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { SalesDetail, useSalesDetails } from '@/hooks/useSalesDetails';
-import { useSalesOperations } from '@/hooks/useSalesOperations';
 import { 
   Dialog,
   DialogContent,
@@ -19,9 +18,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import SearchInput from '../SearchInput';
-import { FileText, Edit } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import SalesReportDialog from '../reports/SalesReportDialog';
-import SaleEditForm from './SaleEditForm';
 
 interface SalesDetailsDialogProps {
   isOpen: boolean;
@@ -40,7 +38,6 @@ const SalesDetailsDialog = ({
   const { salesDetails, loading } = useSalesDetails(transactionId || '', detailsSearchQuery);
   
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return '-';
@@ -52,10 +49,6 @@ const SalesDetailsDialog = ({
 
   const handleOpenReport = () => {
     setReportDialogOpen(true);
-  };
-
-  const handleEditOrder = () => {
-    setEditDialogOpen(true);
   };
 
   return (
@@ -74,10 +67,6 @@ const SalesDetailsDialog = ({
               />
               
               <div className="space-x-2">
-                <Button variant="outline" onClick={handleEditOrder}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Order
-                </Button>
                 <Button variant="outline" onClick={handleOpenReport}>
                   <FileText className="mr-2 h-4 w-4" />
                   Generate Report
@@ -163,18 +152,6 @@ const SalesDetailsDialog = ({
         onOpenChange={setReportDialogOpen}
         transactionId={transactionId}
       />
-
-      {salesDetails.length > 0 && (
-        <SaleEditForm
-          isOpen={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          transactionId={transactionId}
-          initialData={salesDetails}
-          onSaveSuccess={() => {
-            if (onRefresh) onRefresh();
-          }}
-        />
-      )}
     </>
   );
 };

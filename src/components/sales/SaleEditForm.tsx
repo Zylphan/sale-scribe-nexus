@@ -6,8 +6,8 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useProducts } from '@/hooks/useProducts';
 import { useLatestPrice } from '@/hooks/useLatestPrice';
+import { useSalesDetails } from '@/hooks/useSalesDetails';
 import { useSalesOperations } from '@/hooks/useSalesOperations';
-import { SalesDetail } from '@/hooks/useSalesDetails';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -47,7 +47,7 @@ interface SaleEditFormProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   transactionId: string | null;
-  initialData: SalesDetail[];
+  initialData?: any[];
   onSaveSuccess: () => void;
 }
 
@@ -69,7 +69,6 @@ export default function SaleEditForm({
   isOpen,
   onOpenChange,
   transactionId,
-  initialData,
   onSaveSuccess
 }: SaleEditFormProps) {
   const { customers, loading: loadingCustomers } = useCustomers();
@@ -78,35 +77,34 @@ export default function SaleEditForm({
   const [selectedProductCode, setSelectedProductCode] = useState<string | null>(null);
   const { price: latestPrice } = useLatestPrice(selectedProductCode);
   const { updateFullSale, loading: savingData } = useSalesOperations();
+  const { salesDetails, loading: loadingSalesDetails } = useSalesDetails(transactionId || '');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      transno: '',
+      transno: transactionId || '',
       salesdate: new Date(),
       custno: '',
       empno: '',
-      details: [{ prodcode: '', quantity: 1 }]
+      details: [{ prodcode: '', quantity: 1, unitprice: 0 }]
     }
   });
 
   // Initialize form with existing data
   useEffect(() => {
-    if (isOpen && initialData.length > 0 && transactionId) {
-      const firstItem = initialData[0];
+    if (isOpen && salesDetails.length > 0 && transactionId) {
+      const firstItem = salesDetails[0];
       
-      // Extract customer and employee info
-      const custno = firstItem.customer_name?.includes(' ') 
-        ? firstItem.customer_name?.split(' ')[0]
-        : firstItem.customer_name || '';
-        
+      // Get customer number
+      const custno = firstItem.customer_name?.split(' ')[0] || '';
+      
       // Format the form data
       const formData = {
         transno: transactionId,
-        salesdate: new Date(),
+        salesdate: firstItem.salesdate ? new Date(firstItem.salesdate) : new Date(),
         custno: custno,
         empno: firstItem.employee_name?.split(' ')[0] || '',
-        details: initialData.map(detail => ({
+        details: salesDetails.map(detail => ({
           prodcode: detail.prodcode,
           quantity: detail.quantity || 1,
           unitprice: detail.unit_price || 0
@@ -115,7 +113,7 @@ export default function SaleEditForm({
       
       form.reset(formData);
     }
-  }, [isOpen, initialData, form, transactionId]);
+  }, [isOpen, salesDetails, form, transactionId]);
 
   const details = form.watch('details');
 
@@ -135,7 +133,7 @@ export default function SaleEditForm({
     const currentDetails = form.getValues('details');
     form.setValue('details', [
       ...currentDetails,
-      { prodcode: '', quantity: 1 }
+      { prodcode: '', quantity: 1, unitprice: 0 }
     ]);
   };
 
@@ -156,6 +154,13 @@ export default function SaleEditForm({
   const onSubmit = async (data: FormValues) => {
     if (transactionId) {
       const { transno, ...saleData } = data;
+      
+      // Ensure all required fields are present in the details array
+      const formattedDetails = data.details.map(detail => ({
+        prodcode: detail.prodcode,
+        quantity: detail.quantity
+      }));
+      
       const success = await updateFullSale(
         transactionId, 
         {
@@ -163,7 +168,7 @@ export default function SaleEditForm({
           custno: saleData.custno,
           empno: saleData.empno
         }, 
-        data.details
+        formattedDetails
       );
       
       if (success) {
@@ -172,6 +177,23 @@ export default function SaleEditForm({
       }
     }
   };
+
+  // Show loading state while fetching sales details
+  if (loadingSalesDetails && isOpen) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Sale #{transactionId}</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center items-center p-10">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            <p className="ml-2">Loading sale details...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
