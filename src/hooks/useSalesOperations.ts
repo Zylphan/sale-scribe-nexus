@@ -17,9 +17,9 @@ export function useSalesOperations() {
     try {
       setLoading(true);
       
-      // Generate a transaction number based on current timestamp
-      const timestamp = new Date().getTime();
-      const transno = `TR${timestamp.toString().slice(-8)}`;
+      // Generate a shorter transaction number to fit the 8-character limit
+      const randomId = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+      const transno = `TR${randomId}`;
       
       // Insert the sale
       const { error: saleError } = await supabase
@@ -77,6 +77,73 @@ export function useSalesOperations() {
     }
   };
 
+  const updateSale = async (transno: string, saleData: Partial<Sale>) => {
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('sales')
+        .update(saleData)
+        .eq('transno', transno);
+      
+      if (error) throw error;
+      
+      toast.success('Sale updated successfully');
+      return true;
+    } catch (error: any) {
+      toast.error(`Error updating sale: ${error.message}`);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateFullSale = async (
+    transno: string, 
+    saleData: Partial<Sale>, 
+    details: Omit<SalesDetailItem, 'transno'>[]
+  ) => {
+    try {
+      setLoading(true);
+      
+      // First update the sale header
+      const { error: saleError } = await supabase
+        .from('sales')
+        .update(saleData)
+        .eq('transno', transno);
+      
+      if (saleError) throw saleError;
+      
+      // Delete existing sale details
+      const { error: deleteError } = await supabase
+        .from('salesdetail')
+        .delete()
+        .eq('transno', transno);
+      
+      if (deleteError) throw deleteError;
+      
+      // Insert new sale details
+      const detailsWithTransno = details.map(detail => ({
+        ...detail,
+        transno
+      }));
+      
+      const { error: detailsError } = await supabase
+        .from('salesdetail')
+        .insert(detailsWithTransno);
+        
+      if (detailsError) throw detailsError;
+      
+      toast.success('Sale updated successfully');
+      return true;
+    } catch (error: any) {
+      toast.error(`Error updating sale: ${error.message}`);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deleteSaleDetail = async (transno: string, prodcode: string) => {
     try {
       setLoading(true);
@@ -99,10 +166,43 @@ export function useSalesOperations() {
     }
   };
 
+  const deleteSale = async (transno: string) => {
+    try {
+      setLoading(true);
+      
+      // First delete all sale details
+      const { error: detailsError } = await supabase
+        .from('salesdetail')
+        .delete()
+        .eq('transno', transno);
+      
+      if (detailsError) throw detailsError;
+      
+      // Then delete the sale
+      const { error: saleError } = await supabase
+        .from('sales')
+        .delete()
+        .eq('transno', transno);
+      
+      if (saleError) throw saleError;
+      
+      toast.success('Sale deleted successfully');
+      return true;
+    } catch (error: any) {
+      toast.error(`Error deleting sale: ${error.message}`);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     addSale,
+    updateSale,
     updateSaleDetail,
-    deleteSaleDetail
+    deleteSaleDetail,
+    deleteSale,
+    updateFullSale
   };
 }
