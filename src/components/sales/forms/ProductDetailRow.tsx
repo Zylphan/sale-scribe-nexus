@@ -1,6 +1,5 @@
 
 import { X } from 'lucide-react';
-import { useProducts } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import {
   FormField,
@@ -10,15 +9,9 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { UseFormReturn } from 'react-hook-form';
 import { FormValues } from './types';
+import ProductSearchSelect from './ProductSearchSelect';
 
 interface ProductDetailRowProps {
   index: number;
@@ -33,12 +26,11 @@ export default function ProductDetailRow({
   onRemove, 
   onProductChange 
 }: ProductDetailRowProps) {
-  const { products, loading: loadingProducts } = useProducts();
   const details = form.getValues('details');
 
   return (
     <div className="grid grid-cols-12 gap-3 items-end border p-3 rounded-md">
-      {/* Product */}
+      {/* Product - Updated to use ProductSearchSelect */}
       <div className="col-span-5">
         <FormField
           control={form.control}
@@ -46,24 +38,11 @@ export default function ProductDetailRow({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Product</FormLabel>
-              <Select
-                onValueChange={(value) => onProductChange(value, index)}
+              <ProductSearchSelect
                 value={field.value}
-                disabled={loadingProducts}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a product" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {products.map(product => (
-                    <SelectItem key={product.prodcode} value={product.prodcode}>
-                      {product.description || product.prodcode}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => onProductChange(value, index)}
+                disabled={field.disabled}
+              />
               <FormMessage />
             </FormItem>
           )}

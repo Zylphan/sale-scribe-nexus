@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, Plus, X } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useEmployees } from '@/hooks/useEmployees';
-import { useProducts } from '@/hooks/useProducts';
 import { useLatestPrice } from '@/hooks/useLatestPrice';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -40,6 +39,7 @@ import { cn } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import ProductSearchSelect from './forms/ProductSearchSelect';
 
 const formSchema = z.object({
   salesdate: z.date(),
@@ -69,7 +69,6 @@ export default function SaleDetailForm({
 }: SaleDetailFormProps) {
   const { customers, loading: loadingCustomers } = useCustomers();
   const { employees, loading: loadingEmployees } = useEmployees();
-  const { products, loading: loadingProducts } = useProducts();
   const [selectedProductCode, setSelectedProductCode] = useState<string | null>(null);
   const { price: latestPrice } = useLatestPrice(selectedProductCode);
 
@@ -250,13 +249,14 @@ export default function SaleDetailForm({
                   variant="outline" 
                   onClick={addProductDetail}
                 >
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Product
                 </Button>
               </div>
               
               {form.getValues('details').map((detail, index) => (
                 <div key={index} className="grid grid-cols-12 gap-3 items-end border p-3 rounded-md">
-                  {/* Product */}
+                  {/* Product - Updated to use ProductSearchSelect */}
                   <div className="col-span-5">
                     <FormField
                       control={form.control}
@@ -264,24 +264,10 @@ export default function SaleDetailForm({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Product</FormLabel>
-                          <Select
-                            onValueChange={(value) => handleProductChange(value, index)}
+                          <ProductSearchSelect
                             value={field.value}
-                            disabled={loadingProducts}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a product" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {products.map(product => (
-                                <SelectItem key={product.prodcode} value={product.prodcode}>
-                                  {product.description || product.prodcode}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            onChange={(value) => handleProductChange(value, index)}
+                          />
                           <FormMessage />
                         </FormItem>
                       )}
@@ -342,7 +328,7 @@ export default function SaleDetailForm({
                       onClick={() => removeProductDetail(index)}
                       disabled={form.getValues('details').length <= 1}
                     >
-                      X
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
