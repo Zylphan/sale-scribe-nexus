@@ -30,7 +30,8 @@ export function useProducts(searchQuery: string = '') {
           throw error;
         }
         
-        setProducts(data || []);
+        // Ensure products is always an array, even if data is null
+        setProducts(Array.isArray(data) ? data : []);
       } catch (error: any) {
         console.error('Error fetching products:', error);
         toast.error(`Error fetching products: ${error.message}`);

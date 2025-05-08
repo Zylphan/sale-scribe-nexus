@@ -27,12 +27,12 @@ interface ProductSearchSelectProps {
 export default function ProductSearchSelect({ value, onChange, disabled = false }: ProductSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { products, loading } = useProducts(searchQuery);
+  const { products = [], loading } = useProducts(searchQuery); // Provide default empty array
   const [selectedProductName, setSelectedProductName] = useState('');
 
   // Update the selected product name when value or products change
   useEffect(() => {
-    if (value && products && products.length > 0) {
+    if (value && Array.isArray(products) && products.length > 0) {
       const product = products.find(p => p.prodcode === value);
       if (product) {
         setSelectedProductName(product.description || product.prodcode);
@@ -41,12 +41,24 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
   }, [value, products]);
 
   const handleSelect = (productCode: string) => {
+    if (!productCode) return; // Guard against empty value
+    
     onChange(productCode);
-    const product = products.find(p => p.prodcode === productCode);
-    if (product) {
-      setSelectedProductName(product.description || product.prodcode);
+    
+    // Find the product in the products array
+    if (Array.isArray(products)) {
+      const product = products.find(p => p.prodcode === productCode);
+      if (product) {
+        setSelectedProductName(product.description || product.prodcode);
+      }
     }
+    
     setOpen(false);
+  };
+
+  // Handle button click separately from state changes
+  const handleButtonClick = () => {
+    setOpen(!open);
   };
 
   return (
@@ -63,7 +75,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             )}
             disabled={disabled}
             type="button" // Prevent form submission
-            onClick={() => setOpen(!open)} // Explicitly handle open state
+            onClick={handleButtonClick} // Use dedicated handler
           >
             {value && selectedProductName ? selectedProductName : "Search products..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -71,7 +83,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]" align="start">
-        <Command shouldFilter={false}> {/* Add shouldFilter={false} to prevent automatic filtering */}
+        <Command shouldFilter={false}> {/* Prevent automatic filtering */}
           <CommandInput 
             placeholder="Search products..." 
             value={searchQuery}
@@ -82,7 +94,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             {loading ? (
               <div className="p-2 text-center text-sm">Loading...</div>
             ) : (
-              products && products.map(product => (
+              Array.isArray(products) && products.map(product => (
                 <CommandItem
                   key={product.prodcode}
                   value={product.prodcode}
