@@ -1,10 +1,11 @@
 
 import { useState } from 'react';
 import { useSalesOperations } from '@/hooks/useSalesOperations';
-import SaleDetailForm from './SaleDetailForm';
+import CreateSaleForm from './forms/CreateSaleForm';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { FormValues } from './forms/types';
 
 interface AddSaleDialogProps {
   onSaleAdded: () => void;
@@ -14,7 +15,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { addSale, loading } = useSalesOperations();
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: FormValues) => {
     const { salesdate, custno, empno, details } = data;
     
     // Format date to ISO string if it's a Date object
@@ -50,7 +51,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
         New Sale
       </Button>
       
-      <SaleDetailForm
+      <CreateSaleForm
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         onSubmit={handleSubmit}

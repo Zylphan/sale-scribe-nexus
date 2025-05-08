@@ -31,28 +31,31 @@ import { FormValues } from './types';
 
 interface OrderDetailsFieldsProps {
   form: UseFormReturn<FormValues>;
+  hideTransactionId?: boolean;
 }
 
-export default function OrderDetailsFields({ form }: OrderDetailsFieldsProps) {
+export default function OrderDetailsFields({ form, hideTransactionId = false }: OrderDetailsFieldsProps) {
   const { customers, loading: loadingCustomers } = useCustomers();
   const { employees, loading: loadingEmployees } = useEmployees();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Transaction ID (read-only) */}
-      <FormField
-        control={form.control}
-        name="transno"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Order ID</FormLabel>
-            <FormControl>
-              <Input {...field} readOnly className="bg-gray-100" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {/* Transaction ID (read-only) - Only show if not hidden */}
+      {!hideTransactionId && (
+        <FormField
+          control={form.control}
+          name="transno"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Order ID</FormLabel>
+              <FormControl>
+                <Input {...field} readOnly className="bg-gray-100" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
       
       {/* Sales Date */}
       <FormField
