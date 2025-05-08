@@ -34,6 +34,7 @@ export function useProducts(searchQuery: string = '') {
       } catch (error: any) {
         console.error('Error fetching products:', error);
         toast.error(`Error fetching products: ${error.message}`);
+        setProducts([]); // Ensure we always have an empty array, not undefined
       } finally {
         setLoading(false);
       }

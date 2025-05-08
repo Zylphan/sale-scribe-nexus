@@ -32,7 +32,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
 
   // Update the selected product name when value or products change
   useEffect(() => {
-    if (value && products.length > 0) {
+    if (value && products && products.length > 0) {
       const product = products.find(p => p.prodcode === value);
       if (product) {
         setSelectedProductName(product.description || product.prodcode);
@@ -62,7 +62,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
               !value && "text-muted-foreground"
             )}
             disabled={disabled}
-            type="button" // Add type="button" to prevent form submission
+            type="button" // Prevent form submission
             onClick={() => setOpen(!open)} // Explicitly handle open state
           >
             {value && selectedProductName ? selectedProductName : "Search products..."}
@@ -71,7 +71,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]" align="start">
-        <Command>
+        <Command shouldFilter={false}> {/* Add shouldFilter={false} to prevent automatic filtering */}
           <CommandInput 
             placeholder="Search products..." 
             value={searchQuery}
@@ -82,7 +82,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             {loading ? (
               <div className="p-2 text-center text-sm">Loading...</div>
             ) : (
-              products.map(product => (
+              products && products.map(product => (
                 <CommandItem
                   key={product.prodcode}
                   value={product.prodcode}
