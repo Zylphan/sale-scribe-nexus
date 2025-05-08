@@ -20,11 +20,11 @@ export function useProducts(searchQuery: string = '') {
         
         let query = supabase.from('product').select('*');
         
-        if (searchQuery) {
+        if (searchQuery && searchQuery.trim() !== '') {
           query = query.or(`prodcode.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,unit.ilike.%${searchQuery}%`);
         }
         
-        const { data, error } = await query;
+        const { data, error } = await query.limit(50); // Add a limit to prevent large data fetches
         
         if (error) {
           throw error;
@@ -32,6 +32,7 @@ export function useProducts(searchQuery: string = '') {
         
         setProducts(data || []);
       } catch (error: any) {
+        console.error('Error fetching products:', error);
         toast.error(`Error fetching products: ${error.message}`);
       } finally {
         setLoading(false);

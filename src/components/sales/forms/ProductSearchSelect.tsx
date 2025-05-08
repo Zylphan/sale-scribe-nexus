@@ -40,6 +40,15 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
     }
   }, [value, products]);
 
+  const handleSelect = (productCode: string) => {
+    onChange(productCode);
+    const product = products.find(p => p.prodcode === productCode);
+    if (product) {
+      setSelectedProductName(product.description || product.prodcode);
+    }
+    setOpen(false);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -53,13 +62,15 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
               !value && "text-muted-foreground"
             )}
             disabled={disabled}
+            type="button" // Add type="button" to prevent form submission
+            onClick={() => setOpen(!open)} // Explicitly handle open state
           >
             {value && selectedProductName ? selectedProductName : "Search products..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </FormControl>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[300px]">
+      <PopoverContent className="p-0 w-[300px]" align="start">
         <Command>
           <CommandInput 
             placeholder="Search products..." 
@@ -75,11 +86,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
                 <CommandItem
                   key={product.prodcode}
                   value={product.prodcode}
-                  onSelect={() => {
-                    onChange(product.prodcode);
-                    setSelectedProductName(product.description || product.prodcode);
-                    setOpen(false);
-                  }}
+                  onSelect={() => handleSelect(product.prodcode)}
                 >
                   <Check
                     className={cn(
