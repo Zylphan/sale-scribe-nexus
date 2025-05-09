@@ -44,5 +44,5 @@ export function useProducts(searchQuery: string = '') {
     fetchProducts();
   }, [searchQuery]);
 
-  return { products, loading };
+  return { products: products || [], loading };
 }

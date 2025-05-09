@@ -27,24 +27,27 @@ interface ProductSearchSelectProps {
 export default function ProductSearchSelect({ value, onChange, disabled = false }: ProductSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { products = [], loading } = useProducts(searchQuery); // Provide default empty array
+  const { products, loading } = useProducts(searchQuery);
   const [selectedProductName, setSelectedProductName] = useState('');
-
+  
+  // Ensure products is always a valid array
+  const safeProducts = Array.isArray(products) ? products : [];
+  
   // Update the selected product name when value or products change
   useEffect(() => {
-    if (value && products && products.length > 0) {
-      const product = products.find(p => p.prodcode === value);
+    if (value && safeProducts.length > 0) {
+      const product = safeProducts.find(p => p.prodcode === value);
       if (product) {
         setSelectedProductName(product.description || product.prodcode);
       }
     }
-  }, [value, products]);
+  }, [value, safeProducts]);
 
   const handleSelect = (productCode: string) => {
     if (!productCode) return; // Guard against empty value
     
     // Find the product in the products array
-    const product = products.find(p => p.prodcode === productCode);
+    const product = safeProducts.find(p => p.prodcode === productCode);
     
     if (product) {
       // Update the form value via onChange callback
@@ -77,7 +80,10 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             )}
             disabled={disabled}
             type="button" // Prevent form submission
-            onClick={() => !disabled && setOpen(!open)}
+            onClick={(e) => {
+              e.preventDefault(); // Prevent any form submission
+              if (!disabled) setOpen(!open);
+            }}
           >
             {value && selectedProductName ? selectedProductName : "Search products..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -91,13 +97,13 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
-          <CommandEmpty>No products found.</CommandEmpty>
-          <CommandGroup className="max-h-[300px] overflow-y-auto">
-            {loading ? (
-              <div className="p-2 text-center text-sm">Loading...</div>
-            ) : (
-              // Make sure products is always treated as an array
-              products && products.map((product) => (
+          {loading ? (
+            <div className="p-2 text-center text-sm">Loading...</div>
+          ) : safeProducts.length === 0 ? (
+            <CommandEmpty>No products found.</CommandEmpty>
+          ) : (
+            <CommandGroup className="max-h-[300px] overflow-y-auto">
+              {safeProducts.map((product) => (
                 <CommandItem
                   key={product.prodcode}
                   value={product.prodcode}
@@ -112,9 +118,9 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
                   {product.description || product.prodcode}
                   <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
                 </CommandItem>
-              ))
-            )}
-          </CommandGroup>
+              ))}
+            </CommandGroup>
+          )}
         </Command>
       </PopoverContent>
     </Popover>
