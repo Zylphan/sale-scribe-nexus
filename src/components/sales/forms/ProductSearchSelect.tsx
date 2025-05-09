@@ -102,7 +102,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             {loading ? (
               <div className="p-2 text-center text-sm">Loading...</div>
             ) : (
-              <>
+              <CommandList>
                 {safeProducts.length === 0 ? (
                   <CommandEmpty>No products found.</CommandEmpty>
                 ) : (
@@ -125,7 +125,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
                     ))}
                   </CommandGroup>
                 )}
-              </>
+              </CommandList>
             )}
           </Command>
         </PopoverContent>

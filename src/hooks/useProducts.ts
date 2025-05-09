@@ -30,11 +30,12 @@ export function useProducts(searchQuery: string = '') {
           throw error;
         }
         
-        setProducts(Array.isArray(data) ? data : []);
+        // Always ensure products is a valid array
+        setProducts(data && Array.isArray(data) ? data : []);
       } catch (error: any) {
         console.error('Error fetching products:', error);
         toast.error(`Error fetching products: ${error.message}`);
-        // Ensure we reset to an empty array on error
+        // Reset to empty array on error
         setProducts([]);
       } finally {
         setLoading(false);
@@ -44,5 +45,6 @@ export function useProducts(searchQuery: string = '') {
     fetchProducts();
   }, [searchQuery]);
 
-  return { products, loading };
+  // Always return a valid array, even if products is somehow undefined
+  return { products: products || [], loading };
 }
