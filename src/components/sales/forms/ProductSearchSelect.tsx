@@ -27,12 +27,12 @@ interface ProductSearchSelectProps {
 export default function ProductSearchSelect({ value, onChange, disabled = false }: ProductSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { products, loading } = useProducts(searchQuery);
+  const { products = [], loading } = useProducts(searchQuery); // Provide default empty array
   const [selectedProductName, setSelectedProductName] = useState('');
 
   // Update the selected product name when value or products change
   useEffect(() => {
-    if (value && Array.isArray(products) && products.length > 0) {
+    if (value && products && products.length > 0) {
       const product = products.find(p => p.prodcode === value);
       if (product) {
         setSelectedProductName(product.description || product.prodcode);
@@ -40,16 +40,15 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
     }
   }, [value, products]);
 
-  const handleSelect = (currentValue: string) => {
-    // Only proceed if we have a valid product code
-    if (!currentValue) return;
+  const handleSelect = (productCode: string) => {
+    if (!productCode) return; // Guard against empty value
     
     // Find the product in the products array
-    const product = products.find(p => p.prodcode === currentValue);
+    const product = products.find(p => p.prodcode === productCode);
     
     if (product) {
       // Update the form value via onChange callback
-      onChange(currentValue);
+      onChange(productCode);
       // Update the display name
       setSelectedProductName(product.description || product.prodcode);
       // Close the popover
@@ -77,7 +76,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
               !value && "text-muted-foreground"
             )}
             disabled={disabled}
-            type="button"
+            type="button" // Prevent form submission
             onClick={() => !disabled && setOpen(!open)}
           >
             {value && selectedProductName ? selectedProductName : "Search products..."}
@@ -97,6 +96,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             {loading ? (
               <div className="p-2 text-center text-sm">Loading...</div>
             ) : (
+              // Make sure products is always treated as an array
               products && products.map((product) => (
                 <CommandItem
                   key={product.prodcode}
