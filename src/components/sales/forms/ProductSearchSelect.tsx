@@ -58,11 +58,13 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
 
   // Handle button click separately from state changes
   const handleButtonClick = () => {
-    setOpen(!open);
+    if (!disabled) {
+      setOpen(!open);
+    }
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(isOpen) => !disabled && setOpen(isOpen)}>
       <PopoverTrigger asChild>
         <FormControl>
           <Button
