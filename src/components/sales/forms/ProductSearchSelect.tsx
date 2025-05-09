@@ -30,7 +30,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
   const { products, loading } = useProducts(searchQuery);
   const [selectedProductName, setSelectedProductName] = useState('');
   
-  // Ensure products is always a valid array
+  // Always ensure products is a valid array, even if it's empty
   const safeProducts = Array.isArray(products) ? products : [];
   
   // Update the selected product name when value or products change
@@ -43,15 +43,16 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
     }
   }, [value, safeProducts]);
 
-  const handleSelect = (productCode: string) => {
-    if (!productCode) return; // Guard against empty value
+  const handleSelect = (currentValue: string) => {
+    // Guard against empty value
+    if (!currentValue) return;
     
     // Find the product in the products array
-    const product = safeProducts.find(p => p.prodcode === productCode);
+    const product = safeProducts.find(p => p.prodcode === currentValue);
     
     if (product) {
       // Update the form value via onChange callback
-      onChange(productCode);
+      onChange(currentValue);
       // Update the display name
       setSelectedProductName(product.description || product.prodcode);
       // Close the popover
@@ -79,9 +80,9 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
               !value && "text-muted-foreground"
             )}
             disabled={disabled}
-            type="button" // Prevent form submission
+            type="button"
             onClick={(e) => {
-              e.preventDefault(); // Prevent any form submission
+              e.preventDefault();
               if (!disabled) setOpen(!open);
             }}
           >
@@ -91,18 +92,19 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]" align="start">
-        <Command shouldFilter={false}>
+        <Command>
           <CommandInput 
             placeholder="Search products..." 
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
+          
           {loading ? (
             <div className="p-2 text-center text-sm">Loading...</div>
           ) : safeProducts.length === 0 ? (
             <CommandEmpty>No products found.</CommandEmpty>
           ) : (
-            <CommandGroup className="max-h-[300px] overflow-y-auto">
+            <CommandGroup>
               {safeProducts.map((product) => (
                 <CommandItem
                   key={product.prodcode}
