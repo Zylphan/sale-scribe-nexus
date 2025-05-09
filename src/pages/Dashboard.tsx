@@ -34,14 +34,14 @@ const Dashboard = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <Link to="/dashboard">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-sales-secondary text-white hover:bg-sales-primary hover:text-white`}>
                       Dashboard
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link to="/reports">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary`}>
                       Reports
                     </NavigationMenuLink>
                   </Link>
@@ -51,7 +51,7 @@ const Dashboard = () => {
             <Button 
               variant="outline" 
               onClick={signOut}
-              className="text-white border-white hover:bg-white hover:text-sales-primary bg-sales-primary"
+              className="text-white border-white hover:bg-white hover:text-sales-primary bg-transparent"
             >
               Logout
             </Button>

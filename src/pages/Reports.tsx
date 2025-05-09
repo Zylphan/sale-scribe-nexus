@@ -95,14 +95,14 @@ const Reports = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <Link to="/dashboard">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary`}>
                       Dashboard
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link to="/reports">
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-sales-secondary text-white hover:bg-sales-primary hover:text-white`}>
                       Reports
                     </NavigationMenuLink>
                   </Link>
@@ -112,7 +112,7 @@ const Reports = () => {
             <Button 
               variant="outline" 
               onClick={signOut}
-              className="text-white border-white hover:bg-white hover:text-sales-primary bg-sales-primary"
+              className="text-white border-white hover:bg-white hover:text-sales-primary bg-transparent"
             >
               Logout
             </Button>
@@ -133,7 +133,7 @@ const Reports = () => {
                   value={inputValue}
                   onChange={setInputValue}
                 />
-                <Button type="submit">Search</Button>
+                <Button type="submit" className="bg-sales-secondary hover:bg-sales-primary text-white">Search</Button>
               </form>
               
               <div className="overflow-x-auto">
@@ -170,6 +170,7 @@ const Reports = () => {
                               variant="outline" 
                               size="sm"
                               onClick={() => handleViewReport(sale.transno)}
+                              className="text-sales-primary border-sales-primary hover:bg-sales-primary hover:text-white"
                             >
                               <FileText className="mr-2 h-4 w-4" />
                               View Report
@@ -192,6 +193,7 @@ const Reports = () => {
                   <Button
                     variant="outline"
                     onClick={() => setSelectedTransaction(null)}
+                    className="text-sales-primary border-sales-primary hover:bg-sales-primary hover:text-white"
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to List
@@ -199,6 +201,7 @@ const Reports = () => {
                   <Button 
                     onClick={handleDownloadPDF}
                     disabled={salesDetails.length === 0}
+                    className="bg-sales-secondary hover:bg-sales-primary text-white"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Download PDF
