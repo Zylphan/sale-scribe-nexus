@@ -34,14 +34,14 @@ const Dashboard = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <Link to="/dashboard">
-                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-sales-secondary text-white hover:bg-sales-primary hover:text-white`}>
+                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-sales-secondary text-white hover:bg-sales-primary hover:text-white border border-white`}>
                       Dashboard
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link to="/reports">
-                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary`}>
+                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary border border-white`}>
                       Reports
                     </NavigationMenuLink>
                   </Link>
