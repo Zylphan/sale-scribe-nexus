@@ -7,10 +7,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import ReportsPage from "./components/reports/ReportsPage";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +30,7 @@ const App = () => (
             } />
             <Route path="/reports" element={
               <ProtectedRoute>
-                <ReportsPage />
+                <Reports />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

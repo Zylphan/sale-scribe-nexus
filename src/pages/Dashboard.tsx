@@ -4,6 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSales } from "@/hooks/useSales";
 import { useState, useEffect } from "react";
 import TableSearch from "@/components/TableSearch";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { signOut, user } = useAuth();
@@ -21,13 +29,33 @@ const Dashboard = () => {
       <header className="bg-sales-primary text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold">Sales Management System</h1>
-          <Button 
-            variant="outline" 
-            onClick={signOut}
-            className="text-white border-white hover:bg-white hover:text-sales-primary bg-sales-primary"
-          >
-            Logout
-          </Button>
+          <div className="flex items-center space-x-4">
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <Link to="/dashboard">
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Dashboard
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link to="/reports">
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Reports
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+            <Button 
+              variant="outline" 
+              onClick={signOut}
+              className="text-white border-white hover:bg-white hover:text-sales-primary bg-sales-primary"
+            >
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
       
