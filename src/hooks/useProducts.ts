@@ -24,18 +24,17 @@ export function useProducts(searchQuery: string = '') {
           query = query.or(`prodcode.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,unit.ilike.%${searchQuery}%`);
         }
         
-        const { data, error } = await query.limit(50); // Add a limit to prevent large data fetches
+        const { data, error } = await query.limit(50);
         
         if (error) {
           throw error;
         }
         
-        // Ensure products is always an array, even if data is null
-        setProducts(Array.isArray(data) ? data : []);
+        setProducts(data || []);
       } catch (error: any) {
         console.error('Error fetching products:', error);
         toast.error(`Error fetching products: ${error.message}`);
-        setProducts([]); // Ensure we always have an empty array, not undefined
+        setProducts([]);
       } finally {
         setLoading(false);
       }

@@ -27,7 +27,7 @@ interface ProductSearchSelectProps {
 export default function ProductSearchSelect({ value, onChange, disabled = false }: ProductSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { products = [], loading } = useProducts(searchQuery); // Provide default empty array
+  const { products, loading } = useProducts(searchQuery);
   const [selectedProductName, setSelectedProductName] = useState('');
 
   // Update the selected product name when value or products change
@@ -40,31 +40,32 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
     }
   }, [value, products]);
 
-  const handleSelect = (productCode: string) => {
-    if (!productCode) return; // Guard against empty value
-    
-    onChange(productCode);
+  const handleSelect = (currentValue: string) => {
+    // Only proceed if we have a valid product code
+    if (!currentValue) return;
     
     // Find the product in the products array
-    if (Array.isArray(products)) {
-      const product = products.find(p => p.prodcode === productCode);
-      if (product) {
-        setSelectedProductName(product.description || product.prodcode);
-      }
-    }
+    const product = products.find(p => p.prodcode === currentValue);
     
-    setOpen(false);
-  };
-
-  // Handle button click separately from state changes
-  const handleButtonClick = () => {
-    if (!disabled) {
-      setOpen(!open);
+    if (product) {
+      // Update the form value via onChange callback
+      onChange(currentValue);
+      // Update the display name
+      setSelectedProductName(product.description || product.prodcode);
+      // Close the popover
+      setOpen(false);
     }
   };
 
   return (
-    <Popover open={open} onOpenChange={(isOpen) => !disabled && setOpen(isOpen)}>
+    <Popover 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        if (!disabled) {
+          setOpen(isOpen);
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <FormControl>
           <Button
@@ -76,8 +77,8 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
               !value && "text-muted-foreground"
             )}
             disabled={disabled}
-            type="button" // Prevent form submission
-            onClick={handleButtonClick} // Use dedicated handler
+            type="button"
+            onClick={() => !disabled && setOpen(!open)}
           >
             {value && selectedProductName ? selectedProductName : "Search products..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -85,7 +86,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]" align="start">
-        <Command shouldFilter={false}> {/* Prevent automatic filtering */}
+        <Command shouldFilter={false}>
           <CommandInput 
             placeholder="Search products..." 
             value={searchQuery}
@@ -96,11 +97,11 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             {loading ? (
               <div className="p-2 text-center text-sm">Loading...</div>
             ) : (
-              Array.isArray(products) && products.map(product => (
+              products && products.map((product) => (
                 <CommandItem
                   key={product.prodcode}
                   value={product.prodcode}
-                  onSelect={() => handleSelect(product.prodcode)}
+                  onSelect={handleSelect}
                 >
                   <Check
                     className={cn(
