@@ -30,10 +30,10 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
   const { products, loading } = useProducts(searchQuery);
   const [selectedProductName, setSelectedProductName] = useState('');
   
-  // Always ensure products is a valid array, even if it's empty
+  // Always ensure products is an array
   const safeProducts = Array.isArray(products) ? products : [];
   
-  // Update the selected product name when value or products change
+  // Update the selected product name when value changes or when products are loaded
   useEffect(() => {
     if (value && safeProducts.length > 0) {
       const product = safeProducts.find(p => p.prodcode === value);
@@ -91,40 +91,44 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
           </Button>
         </FormControl>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[300px]" align="start">
-        <Command>
-          <CommandInput 
-            placeholder="Search products..." 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
-          
-          {loading ? (
-            <div className="p-2 text-center text-sm">Loading...</div>
-          ) : safeProducts.length === 0 ? (
-            <CommandEmpty>No products found.</CommandEmpty>
-          ) : (
-            <CommandGroup>
-              {safeProducts.map((product) => (
-                <CommandItem
-                  key={product.prodcode}
-                  value={product.prodcode}
-                  onSelect={handleSelect}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === product.prodcode ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {product.description || product.prodcode}
-                  <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-        </Command>
-      </PopoverContent>
+      {open && (
+        <PopoverContent className="p-0 w-[300px]" align="start">
+          <Command>
+            <CommandInput 
+              placeholder="Search products..." 
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+            />
+            
+            <div className="max-h-[300px] overflow-y-auto">
+              {loading ? (
+                <div className="p-2 text-center text-sm">Loading...</div>
+              ) : safeProducts.length === 0 ? (
+                <CommandEmpty>No products found.</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {safeProducts.map((product) => (
+                    <CommandItem
+                      key={product.prodcode}
+                      value={product.prodcode}
+                      onSelect={handleSelect}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === product.prodcode ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {product.description || product.prodcode}
+                      <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </div>
+          </Command>
+        </PopoverContent>
+      )}
     </Popover>
   );
 }
