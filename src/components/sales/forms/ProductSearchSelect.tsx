@@ -60,38 +60,6 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
     }
   };
 
-  // Render a controlled Command component that's safer for cmdk library
-  const renderCommandItems = () => {
-    if (loading) {
-      return <div className="p-2 text-center text-sm">Loading...</div>;
-    }
-    
-    if (safeProducts.length === 0) {
-      return <CommandEmpty>No products found.</CommandEmpty>;
-    }
-    
-    return (
-      <CommandGroup>
-        {safeProducts.map((product) => (
-          <CommandItem
-            key={product.prodcode}
-            value={product.prodcode}
-            onSelect={handleSelect}
-          >
-            <Check
-              className={cn(
-                "mr-2 h-4 w-4",
-                value === product.prodcode ? "opacity-100" : "opacity-0"
-              )}
-            />
-            {product.description || product.prodcode}
-            <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
-          </CommandItem>
-        ))}
-      </CommandGroup>
-    );
-  };
-
   return (
     <Popover 
       open={open} 
@@ -132,7 +100,30 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
               onValueChange={setSearchQuery}
             />
             <div className="max-h-[300px] overflow-y-auto">
-              {renderCommandItems()}
+              {loading ? (
+                <div className="p-2 text-center text-sm">Loading...</div>
+              ) : safeProducts.length === 0 ? (
+                <CommandEmpty>No products found.</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {safeProducts.map((product) => (
+                    <CommandItem
+                      key={product.prodcode}
+                      value={product.prodcode}
+                      onSelect={(value) => handleSelect(value)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === product.prodcode ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {product.description || product.prodcode}
+                      <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
             </div>
           </Command>
         </PopoverContent>
