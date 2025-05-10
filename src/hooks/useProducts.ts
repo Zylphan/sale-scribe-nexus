@@ -21,12 +21,13 @@ export function useProducts(searchQuery: string = '') {
         
         let query = supabase.from('product').select('*');
         
+        // Always use case-insensitive search with ilike
         if (searchQuery && searchQuery.trim() !== '') {
-          // Improved search filter
-          query = query.or(`prodcode.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,unit.ilike.%${searchQuery}%`);
+          // Use ilike for case-insensitive search across all relevant fields
+          query = query.or(`prodcode.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%,unit.ilike.%${searchQuery.trim()}%`);
         }
         
-        const { data, error } = await query.limit(50);
+        const { data, error } = await query.limit(100);  // Increased limit for better search results
         
         if (error) {
           throw error;

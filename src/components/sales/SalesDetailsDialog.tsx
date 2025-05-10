@@ -6,7 +6,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { 
   Table, 
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import SearchInput from '../SearchInput';
+import { format } from 'date-fns';
 
 interface SalesDetailsDialogProps {
   isOpen: boolean;
@@ -43,11 +45,27 @@ const SalesDetailsDialog = ({
     }).format(amount);
   };
 
+  // Format date helper function
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'MMMM d, yyyy');
+    } catch (error) {
+      console.error("Error formatting date", error);
+      return dateString;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Details for Order #{transactionId}</DialogTitle>
+          {salesDetails.length > 0 && salesDetails[0].salesdate && (
+            <DialogDescription>
+              Order Date: {formatDate(salesDetails[0].salesdate)}
+            </DialogDescription>
+          )}
         </DialogHeader>
         <div className="mt-4">
           <div className="flex justify-between items-center mb-4">
