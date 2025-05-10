@@ -31,7 +31,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
   const { products, loading } = useProducts(searchQuery);
   const [selectedProductName, setSelectedProductName] = useState('');
   
-  // Ensure products is always a valid array
+  // Always ensure products is a valid array
   const safeProducts = Array.isArray(products) ? products : [];
   
   // Update the selected product name when value changes or when products are loaded
@@ -98,36 +98,38 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             <CommandInput 
               placeholder="Search products..." 
               value={searchQuery}
-              onValueChange={(value) => setSearchQuery(value)}
+              onValueChange={setSearchQuery}
             />
-            {loading ? (
-              <div className="p-2 text-center text-sm">Loading...</div>
-            ) : (
-              <CommandList>
-                {safeProducts.length === 0 ? (
-                  <CommandEmpty>No products found.</CommandEmpty>
-                ) : (
-                  <CommandGroup>
-                    {safeProducts.map((product) => (
-                      <CommandItem
-                        key={product.prodcode}
-                        value={product.prodcode}
-                        onSelect={handleSelect}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === product.prodcode ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {product.description || product.prodcode}
-                        <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-            )}
+            <CommandList>
+              {loading ? (
+                <div className="p-2 text-center text-sm">Loading...</div>
+              ) : (
+                <>
+                  {safeProducts.length === 0 ? (
+                    <CommandEmpty>No products found.</CommandEmpty>
+                  ) : (
+                    <CommandGroup>
+                      {safeProducts.map((product) => (
+                        <CommandItem
+                          key={product.prodcode}
+                          value={product.prodcode}
+                          onSelect={handleSelect}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              value === product.prodcode ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {product.description || product.prodcode}
+                          <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </>
+              )}
+            </CommandList>
           </Command>
         </PopoverContent>
       )}
