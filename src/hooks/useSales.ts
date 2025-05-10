@@ -64,6 +64,7 @@ export function useSales(searchQuery: string = '', sortColumn: SortColumn = 'sal
         setSales(data || []);
       } catch (error: any) {
         toast.error(`Error fetching sales: ${error.message}`);
+        setSales([]); // Ensure sales is always an array even on error
       } finally {
         setLoading(false);
       }
@@ -93,8 +94,8 @@ export function useSales(searchQuery: string = '', sortColumn: SortColumn = 'sal
           // Get the current state which includes all online users
           const state = channel.presenceState();
           // Count the number of unique sessions
-          const userCount = Object.keys(state).length;
-          setActiveCustomersCount(userCount);
+          const presenceStates = Object.keys(state || {});
+          setActiveCustomersCount(presenceStates.length);
         });
         
         // Return a cleanup function
@@ -106,6 +107,7 @@ export function useSales(searchQuery: string = '', sortColumn: SortColumn = 'sal
         };
       } catch (error) {
         console.error("Error setting up presence:", error);
+        setActiveCustomersCount(0); // Ensure we always have a valid number here
         return () => {}; // Return empty cleanup function in case of error
       }
     };

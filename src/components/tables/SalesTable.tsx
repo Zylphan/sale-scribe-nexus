@@ -86,7 +86,7 @@ const SalesTable = () => {
               onSort={handleSort} 
             />
             <SalesTableList 
-              sales={sales} 
+              sales={sales || []} 
               loading={loading} 
               onViewDetails={handleViewDetails}
               onEditSale={handleEditSale}
