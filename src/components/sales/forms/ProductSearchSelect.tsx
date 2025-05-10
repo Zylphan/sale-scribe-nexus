@@ -100,7 +100,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
         <PopoverContent className="p-0 w-[300px]" align="start">
           <Command>
             <CommandInput 
-              placeholder="Search products..." 
+              placeholder="Search products by name or code..." 
               value={searchQuery}
               onValueChange={(value) => {
                 console.log("Search query changed:", value);
