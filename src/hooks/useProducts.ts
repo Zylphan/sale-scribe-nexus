@@ -17,10 +17,12 @@ export function useProducts(searchQuery: string = '') {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        console.log("Fetching products with search query:", searchQuery);
         
         let query = supabase.from('product').select('*');
         
         if (searchQuery && searchQuery.trim() !== '') {
+          // Improved search filter
           query = query.or(`prodcode.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,unit.ilike.%${searchQuery}%`);
         }
         
@@ -29,6 +31,8 @@ export function useProducts(searchQuery: string = '') {
         if (error) {
           throw error;
         }
+        
+        console.log("Products fetched:", data ? data.length : 0);
         
         // Always ensure products is a valid array
         setProducts(data && Array.isArray(data) ? data : []);
@@ -42,7 +46,12 @@ export function useProducts(searchQuery: string = '') {
       }
     };
 
-    fetchProducts();
+    // Add a slight delay to prevent too many requests while typing
+    const timeoutId = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
   // Always return a valid array, even if products is somehow undefined

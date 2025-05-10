@@ -67,6 +67,10 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
       onOpenChange={(isOpen) => {
         if (!disabled) {
           setOpen(isOpen);
+          // When opening the popover, clear previous search results
+          if (isOpen) {
+            setSearchQuery('');
+          }
         }
       }}
     >
@@ -98,7 +102,11 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
             <CommandInput 
               placeholder="Search products..." 
               value={searchQuery}
-              onValueChange={setSearchQuery}
+              onValueChange={(value) => {
+                console.log("Search query changed:", value);
+                setSearchQuery(value);
+              }}
+              autoFocus
             />
             <CommandList>
               {loading ? (
