@@ -61,16 +61,21 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
     }
   };
 
+  // Open the popover automatically when starting to type
+  useEffect(() => {
+    if (searchQuery && !open && !disabled) {
+      setOpen(true);
+    }
+  }, [searchQuery, open, disabled]);
+
   return (
     <Popover 
       open={open} 
       onOpenChange={(isOpen) => {
         if (!disabled) {
           setOpen(isOpen);
-          // When opening the popover, clear previous search results
-          if (isOpen) {
-            setSearchQuery('');
-          }
+          // When opening the popover, don't clear previous search results
+          // This helps with the autosuggest functionality
         }
       }}
     >

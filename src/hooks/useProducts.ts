@@ -21,10 +21,17 @@ export function useProducts(searchQuery: string = '') {
         
         let query = supabase.from('product').select('*');
         
-        // Always use case-insensitive search with ilike
+        // Show all products when the search field is empty
         if (searchQuery && searchQuery.trim() !== '') {
           // Use ilike for case-insensitive search across all relevant fields
-          query = query.or(`prodcode.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%,unit.ilike.%${searchQuery.trim()}%`);
+          // This will match the beginning of words for better autosuggest functionality
+          query = query.or(
+            `prodcode.ilike.${searchQuery.trim()}%,` +
+            `description.ilike.${searchQuery.trim()}%,` +
+            `prodcode.ilike.%${searchQuery.trim()}%,` +
+            `description.ilike.%${searchQuery.trim()}%,` +
+            `unit.ilike.%${searchQuery.trim()}%`
+          );
         }
         
         const { data, error } = await query.limit(100);  // Increased limit for better search results
@@ -47,10 +54,10 @@ export function useProducts(searchQuery: string = '') {
       }
     };
 
-    // Add a slight delay to prevent too many requests while typing
+    // Add a shorter delay to make the autosuggest feel more responsive
     const timeoutId = setTimeout(() => {
       fetchProducts();
-    }, 300);
+    }, 200);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
