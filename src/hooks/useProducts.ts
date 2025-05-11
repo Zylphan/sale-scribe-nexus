@@ -21,23 +21,21 @@ export function useProducts(searchQuery: string = '') {
         
         let query = supabase.from('product').select('*');
         
-        // Show all products when the search field is empty
+        // Show all products when the search field is empty or has just a space
         if (searchQuery && searchQuery.trim() !== '') {
           const trimmedQuery = searchQuery.trim();
           
-          // Enhanced search pattern to prioritize matching at start of words
-          // This improves autosuggest functionality and makes description (product name) searches more effective
+          // Enhanced search pattern that prioritizes description (product name) matches
           query = query.or(
-            `description.ilike.${trimmedQuery}%,` +   // Description starts with query (highest priority)
-            `prodcode.ilike.${trimmedQuery}%,` +      // Product code starts with query
-            `description.ilike.% ${trimmedQuery}%,` + // Description has word starting with query
-            `description.ilike.%${trimmedQuery}%,` +  // Description contains query anywhere
-            `prodcode.ilike.%${trimmedQuery}%,` +     // Product code contains query anywhere
-            `unit.ilike.%${trimmedQuery}%`            // Unit contains query
+            `description.ilike.${trimmedQuery}%,` +      // Description starts with query (highest priority)
+            `description.ilike.% ${trimmedQuery}%,` +    // Description has word starting with query
+            `prodcode.ilike.${trimmedQuery}%,` +         // Product code starts with query
+            `description.ilike.%${trimmedQuery}%,` +     // Description contains query anywhere
+            `prodcode.ilike.%${trimmedQuery}%`           // Product code contains query anywhere
           );
         }
         
-        const { data, error } = await query.limit(150);  // Increased limit for better search results
+        const { data, error } = await query.limit(200);  // Increased limit for better search results
         
         if (error) {
           throw error;
@@ -57,10 +55,10 @@ export function useProducts(searchQuery: string = '') {
       }
     };
 
-    // Add a shorter delay to make the autosuggest feel more responsive
+    // Use a shorter delay to make the autosuggest feel more responsive
     const timeoutId = setTimeout(() => {
       fetchProducts();
-    }, 150);
+    }, 100);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);

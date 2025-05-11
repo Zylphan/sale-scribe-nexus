@@ -88,12 +88,18 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
     }
   };
 
-  // Open the popover automatically when starting to type
+  // Show all products when opening the dropdown and no search query exists
   useEffect(() => {
-    if (searchQuery && !open && !disabled) {
-      setOpen(true);
+    if (open && !searchQuery && !disabled) {
+      setSearchQuery(' '); // This triggers a search with all results
     }
-  }, [searchQuery, open, disabled]);
+  }, [open, searchQuery, disabled]);
+
+  // Format display text for product items
+  const getProductDisplayText = (product: any) => {
+    if (!product) return '';
+    return product.description ? `${product.description} (${product.prodcode})` : product.prodcode;
+  };
 
   return (
     <Popover 
@@ -131,7 +137,7 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
         </FormControl>
       </PopoverTrigger>
       {open && (
-        <PopoverContent className="p-0 w-[300px]" align="start">
+        <PopoverContent className="p-0 w-[350px]" align="start">
           <Command>
             <CommandInput 
               placeholder="Search products by name or code..." 
@@ -163,10 +169,10 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
                               value === product.prodcode ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          <span className="flex-1">
+                          <div className="flex flex-col">
                             <span className="font-medium">{product.description || 'Unnamed Product'}</span>
-                            <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
-                          </span>
+                            <span className="text-xs text-gray-500">Code: {product.prodcode}</span>
+                          </div>
                         </CommandItem>
                       ))}
                     </CommandGroup>
