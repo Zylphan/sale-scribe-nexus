@@ -1,16 +1,30 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export type UserRole = 'admin' | 'user' | 'blocked';
+
+interface UserProfile {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  role: UserRole;
+  created_at: string;
+  last_sign_in: string | null;
+}
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
+  profile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  isAdmin: () => boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,11 +32,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
   console.log("AuthProvider - Current route:", location.pathname);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return;
+      }
+      
+      setProfile(data);
+      
+      // If user is blocked, sign them out immediately
+      if (data.role === 'blocked') {
+        toast.error('Your account has been blocked. Please contact an administrator.');
+        await supabase.auth.signOut();
+        return;
+      }
+    } catch (error) {
+      console.error("Error in fetchUserProfile:", error);
+    }
+  };
 
   useEffect(() => {
     console.log("AuthProvider - Setting up auth state listener");
@@ -33,6 +74,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("AuthProvider - Auth state changed:", event);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Only fetch profile on sign in or session refresh
+        if (session?.user) {
+          // Use setTimeout to avoid potential deadlocks with Supabase auth
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
         
         if (event === 'SIGNED_IN') {
           toast.success('Signed in successfully');
@@ -60,6 +111,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("AuthProvider - Session check result:", { hasSession: !!session });
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Fetch profile if user is logged in
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
+      
       setLoading(false);
     });
 
@@ -117,8 +174,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const isAdmin = () => {
+    return profile?.role === 'admin';
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signIn, signUp, signOut, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

@@ -11,6 +11,8 @@ import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminRoute from "./components/auth/AdminRoute";
+import UserManagement from "./pages/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,11 @@ const App = () => (
               <ProtectedRoute>
                 <Reports />
               </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <AdminRoute>
+                <UserManagement />
+              </AdminRoute>
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>

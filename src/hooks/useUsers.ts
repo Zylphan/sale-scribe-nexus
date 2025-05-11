@@ -2,6 +2,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { UserRole } from '@/contexts/AuthContext';
+
+export interface UserProfile {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  role: UserRole;
+  created_at: string;
+  last_sign_in: string | null;
+}
 
 export function useUserCount() {
   const [count, setCount] = useState<number>(0);
@@ -56,4 +66,68 @@ export function useUserCount() {
   }, []);
 
   return { count, loading };
+}
+
+export function useUserProfiles() {
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setProfiles(data || []);
+      } catch (error: any) {
+        console.error('Error fetching user profiles:', error);
+        toast.error(`Error fetching user profiles: ${error.message}`);
+        setProfiles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
+
+  return { profiles, loading };
+}
+
+export function useUpdateUserRole() {
+  const [updating, setUpdating] = useState(false);
+  
+  const updateRole = async (userId: string, role: UserRole) => {
+    try {
+      setUpdating(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', userId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success(`User role updated successfully to ${role}`);
+      return true;
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      toast.error(`Failed to update user role: ${error.message}`);
+      return false;
+    } finally {
+      setUpdating(false);
+    }
+  };
+  
+  return { updateRole, updating };
 }
