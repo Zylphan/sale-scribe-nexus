@@ -23,18 +23,21 @@ export function useProducts(searchQuery: string = '') {
         
         // Show all products when the search field is empty
         if (searchQuery && searchQuery.trim() !== '') {
-          // Use ilike for case-insensitive search across all relevant fields
-          // This will match the beginning of words for better autosuggest functionality
+          const trimmedQuery = searchQuery.trim();
+          
+          // Enhanced search pattern to prioritize matching at start of words
+          // This improves autosuggest functionality and makes description (product name) searches more effective
           query = query.or(
-            `prodcode.ilike.${searchQuery.trim()}%,` +
-            `description.ilike.${searchQuery.trim()}%,` +
-            `prodcode.ilike.%${searchQuery.trim()}%,` +
-            `description.ilike.%${searchQuery.trim()}%,` +
-            `unit.ilike.%${searchQuery.trim()}%`
+            `description.ilike.${trimmedQuery}%,` +   // Description starts with query (highest priority)
+            `prodcode.ilike.${trimmedQuery}%,` +      // Product code starts with query
+            `description.ilike.% ${trimmedQuery}%,` + // Description has word starting with query
+            `description.ilike.%${trimmedQuery}%,` +  // Description contains query anywhere
+            `prodcode.ilike.%${trimmedQuery}%,` +     // Product code contains query anywhere
+            `unit.ilike.%${trimmedQuery}%`            // Unit contains query
           );
         }
         
-        const { data, error } = await query.limit(100);  // Increased limit for better search results
+        const { data, error } = await query.limit(150);  // Increased limit for better search results
         
         if (error) {
           throw error;
@@ -57,7 +60,7 @@ export function useProducts(searchQuery: string = '') {
     // Add a shorter delay to make the autosuggest feel more responsive
     const timeoutId = setTimeout(() => {
       fetchProducts();
-    }, 200);
+    }, 150);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);

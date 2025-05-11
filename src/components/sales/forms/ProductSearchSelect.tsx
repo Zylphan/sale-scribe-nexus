@@ -41,8 +41,34 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
       if (product) {
         setSelectedProductName(product.description || product.prodcode);
       }
+    } else if (!value) {
+      setSelectedProductName('');
     }
   }, [value, safeProducts]);
+
+  // When we first load and have a value but no selectedProductName,
+  // fetch the product details to display the name
+  useEffect(() => {
+    const fetchInitialProduct = async () => {
+      if (value && !selectedProductName && !loading) {
+        try {
+          const { data, error } = await supabase
+            .from('product')
+            .select('*')
+            .eq('prodcode', value)
+            .single();
+
+          if (!error && data) {
+            setSelectedProductName(data.description || data.prodcode);
+          }
+        } catch (error) {
+          console.error('Error fetching initial product:', error);
+        }
+      }
+    };
+
+    fetchInitialProduct();
+  }, [value, selectedProductName, loading]);
 
   const handleSelect = (currentValue: string) => {
     // Guard against empty value
@@ -74,8 +100,10 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
       onOpenChange={(isOpen) => {
         if (!disabled) {
           setOpen(isOpen);
-          // When opening the popover, don't clear previous search results
-          // This helps with the autosuggest functionality
+          // When opening the popover manually, show all products
+          if (isOpen && !searchQuery) {
+            setSearchQuery(' '); // This triggers a search with all results
+          }
         }
       }}
     >
@@ -134,8 +162,10 @@ export default function ProductSearchSelect({ value, onChange, disabled = false 
                               value === product.prodcode ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          {product.description || product.prodcode}
-                          <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
+                          <span className="flex-1">
+                            <span className="font-medium">{product.description || 'Unnamed Product'}</span>
+                            <span className="ml-2 text-xs text-gray-500">({product.prodcode})</span>
+                          </span>
                         </CommandItem>
                       ))}
                     </CommandGroup>
