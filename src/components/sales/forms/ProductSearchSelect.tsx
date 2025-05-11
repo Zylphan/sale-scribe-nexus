@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useProducts } from '@/hooks/useProducts';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Command,
   CommandEmpty,
