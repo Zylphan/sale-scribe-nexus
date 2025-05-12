@@ -86,6 +86,7 @@ export function useUserProfiles() {
           throw error;
         }
         
+        console.log("Fetched profiles:", data);
         setProfiles(data || []);
       } catch (error: any) {
         console.error('Error fetching user profiles:', error);
@@ -118,7 +119,6 @@ export function useUpdateUserRole() {
         throw error;
       }
       
-      toast.success(`User role updated successfully to ${role}`);
       return true;
     } catch (error: any) {
       console.error('Error updating user role:', error);

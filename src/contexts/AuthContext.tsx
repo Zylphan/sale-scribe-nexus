@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -52,7 +53,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
+      console.log("Profile fetched:", data);
       setProfile(data);
+      
+      // Update last_sign_in time
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ last_sign_in: new Date().toISOString() })
+        .eq('id', userId);
+        
+      if (updateError) {
+        console.error("Error updating last sign in time:", updateError);
+      }
       
       // If user is blocked, sign them out immediately
       if (data.role === 'blocked') {

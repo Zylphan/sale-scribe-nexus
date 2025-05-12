@@ -14,67 +14,11 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { UserRole } from '@/contexts/AuthContext';
-
-interface UserWithProfile {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  role: UserRole;
-  created_at: string;
-  last_sign_in: string | null;
-}
+import { useUserProfiles, useUpdateUserRole } from '@/hooks/useUsers';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<UserWithProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      setUsers(data || []);
-    } catch (error: any) {
-      console.error('Error fetching users:', error);
-      toast.error(`Failed to fetch users: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const updateUserRole = async (userId: string, role: UserRole) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', userId);
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Update local state
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, role } : user
-      ));
-      
-      toast.success(`User role updated successfully to ${role}`);
-    } catch (error: any) {
-      console.error('Error updating user role:', error);
-      toast.error(`Failed to update user role: ${error.message}`);
-    }
-  };
+  const { profiles, loading } = useUserProfiles();
+  const { updateRole, updating } = useUpdateUserRole();
 
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
@@ -98,14 +42,22 @@ const UserManagement = () => {
     }
   };
 
+  const handleRoleChange = async (userId: string, role: UserRole) => {
+    const success = await updateRole(userId, role);
+    if (success) {
+      // The profiles state will be updated by the useUserProfiles hook automatically
+      toast.success(`User role updated successfully to ${role}`);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">User Management</h1>
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-lg font-medium">All Users</h2>
-          <Button onClick={fetchUsers} disabled={loading}>
-            {loading ? 'Refreshing...' : 'Refresh'}
+          <Button onClick={() => window.location.reload()} disabled={loading}>
+            {loading ? 'Loading...' : 'Refresh'}
           </Button>
         </div>
         
@@ -125,14 +77,14 @@ const UserManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.length === 0 ? (
+              {profiles.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
                     No users found
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map(user => (
+                profiles.map(user => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.full_name || 'No name'}</TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -146,7 +98,8 @@ const UserManagement = () => {
                     <TableCell>
                       <Select
                         defaultValue={user.role}
-                        onValueChange={(value) => updateUserRole(user.id, value as UserRole)}
+                        onValueChange={(value) => handleRoleChange(user.id, value as UserRole)}
+                        disabled={updating}
                       >
                         <SelectTrigger className="w-[120px]">
                           <SelectValue placeholder="Change role" />
