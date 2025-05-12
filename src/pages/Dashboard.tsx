@@ -12,9 +12,10 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
+import { Users } from "lucide-react";
 
 const Dashboard = () => {
-  const { signOut, user } = useAuth();
+  const { signOut, user, isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const { activeCustomersCount, totalSales, loading: salesLoading } = useSales();
 
@@ -46,6 +47,16 @@ const Dashboard = () => {
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
+                {isAdmin() && (
+                  <NavigationMenuItem>
+                    <Link to="/users">
+                      <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary border border-white flex items-center gap-1`}>
+                        <Users size={16} />
+                        User Management
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                )}
               </NavigationMenuList>
             </NavigationMenu>
             <Button 
@@ -81,6 +92,17 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500">Number of sales orders</p>
             </div>
           </div>
+          
+          {isAdmin() && (
+            <div className="mt-6">
+              <Link to="/users">
+                <Button className="bg-sales-primary hover:bg-sales-secondary text-white flex items-center gap-2">
+                  <Users size={18} />
+                  Manage Users
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
         
         <TableSearch />
