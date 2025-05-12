@@ -76,7 +76,58 @@ export function useUserProfiles() {
     const fetchProfiles = async () => {
       try {
         setLoading(true);
+        console.log("Fetching user profiles...");
         
+        // First try to get users from the auth API via edge function
+        try {
+          const { data: authUsersData, error: authError } = await supabase.functions.invoke('get-auth-users');
+          
+          if (authError) {
+            console.error("Error fetching auth users:", authError);
+            throw authError;
+          }
+          
+          if (authUsersData && Array.isArray(authUsersData.users)) {
+            console.log("Fetched auth users:", authUsersData.users.length);
+            
+            // Now get profiles from the profiles table
+            const { data: profilesData, error: profilesError } = await supabase
+              .from('profiles')
+              .select('*');
+              
+            if (profilesError) {
+              console.error("Error fetching profiles:", profilesError);
+              throw profilesError;
+            }
+
+            // Build a map of profiles by user ID for quick lookup
+            const profileMap = new Map();
+            (profilesData || []).forEach(profile => {
+              profileMap.set(profile.id, profile);
+            });
+            
+            // Combine the data, using profile data when available
+            const combinedProfiles = authUsersData.users.map(user => {
+              const profile = profileMap.get(user.id);
+              return {
+                id: user.id,
+                email: user.email,
+                full_name: profile?.full_name || user.user_metadata?.full_name || null,
+                role: profile?.role || 'user',
+                created_at: user.created_at || new Date().toISOString(),
+                last_sign_in: profile?.last_sign_in || null
+              };
+            });
+            
+            setProfiles(combinedProfiles);
+            return;
+          }
+        } catch (fnError) {
+          console.error("Edge function error:", fnError);
+        }
+        
+        // Fallback: Just get from profiles table
+        console.log("Falling back to profiles table only");
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
