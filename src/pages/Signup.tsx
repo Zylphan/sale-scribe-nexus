@@ -1,12 +1,13 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Signup = () => {
   const [fullName, setFullName] = useState('');
@@ -16,15 +17,18 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!fullName || !email || !password || !confirmPassword) {
+      toast.error('All fields are required');
       return;
     }
     
     if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
       return;
     }
     
@@ -32,8 +36,11 @@ const Signup = () => {
     
     try {
       await signUp(email, password, fullName);
-    } catch (error) {
+      toast.success('Account created successfully! Please sign in.');
+      navigate('/login');
+    } catch (error: any) {
       console.error("Signup error:", error);
+      toast.error(error.message || 'Failed to create account');
     } finally {
       setIsLoading(false);
     }
