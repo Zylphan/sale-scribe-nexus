@@ -22,6 +22,9 @@ const Signup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear any previous toast messages
+    toast.dismiss();
+    
     if (!fullName || !email || !password || !confirmPassword) {
       toast.error('All fields are required');
       return;
@@ -40,6 +43,7 @@ const Signup = () => {
       navigate('/login');
     } catch (error: any) {
       console.error("Signup error:", error);
+      // Display a more user-friendly error message
       toast.error(error.message || 'Failed to create account');
     } finally {
       setIsLoading(false);

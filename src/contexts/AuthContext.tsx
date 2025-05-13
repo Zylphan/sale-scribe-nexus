@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -155,6 +154,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
+      // Clear any previous error toasts
+      toast.dismiss();
+      
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -166,13 +168,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
+        console.error("Signup error details:", error);
         throw error;
       }
       
-      toast.success('Signed up successfully! Please check your email for verification.');
-      navigate('/login');
+      // On successful signup
+      return;
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign up');
+      console.error("Signup error in AuthContext:", error);
+      
+      // Provide more specific error messages for common issues
+      if (error.message?.includes('email')) {
+        toast.error('Invalid email address or email already in use');
+      } else if (error.message?.includes('password')) {
+        toast.error('Password is too weak. Use at least 6 characters');
+      } else {
+        toast.error(error.message || 'Failed to create account');
+      }
       throw error;
     }
   };
