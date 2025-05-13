@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   Table, TableBody, TableCaption, TableCell,
@@ -50,7 +49,6 @@ const UserManagement = () => {
   const handleRoleChange = async (userId: string, role: UserRole) => {
     const success = await updateRole(userId, role);
     if (success) {
-      // The profiles state will be updated by the useUserProfiles hook automatically
       toast.success(`User role updated successfully to ${role}`);
     }
   };

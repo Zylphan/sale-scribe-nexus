@@ -64,13 +64,8 @@ const SalesTableList = ({
         <TableRow key={sale.transno}>
           <TableCell className="font-medium">{sale.transno}</TableCell>
           <TableCell>{formatDate(sale.salesdate)}</TableCell>
-          <TableCell>{sale.customer?.custname || 'No customer'}</TableCell>
-          <TableCell>
-            {sale.employee
-              ? `${sale.employee.firstname} ${sale.employee.lastname}`
-              : 'No employee'
-            }
-          </TableCell>
+          <TableCell>{sale.custno || 'No customer'}</TableCell>
+          <TableCell>{sale.empno || 'No employee'}</TableCell>
           <TableCell>
             <div className="flex gap-2 justify-end">
               <Button

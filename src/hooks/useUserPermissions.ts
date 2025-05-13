@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -26,54 +25,37 @@ export const useUserPermissions = (userId?: string) => {
       try {
         setLoading(true);
         
-        // Check if the user_permissions table exists
-        const { error: tableCheckError } = await supabase
+        // First, get a default permissions object
+        const defaultPermissions: UserPermissions = {
+          user_id: userId,
+          can_create_sales: true,
+          can_edit_sales: true,
+          can_delete_sales: true
+        };
+        
+        // Try to fetch user permissions using a type-safe approach
+        // Here we use `from()` with `any` to bypass TypeScript's strict type checking
+        // because the user_permissions table isn't defined in the generated types
+        const { data, error } = await (supabase as any)
           .from('user_permissions')
-          .select('count')
-          .limit(1)
-          .single();
-          
-        if (tableCheckError && tableCheckError.code === '42P01') {
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (error && error.code === '42P01') {
+          // Table doesn't exist - use default permissions
           console.error('Table user_permissions does not exist');
-          // Set default permissions if table doesn't exist
-          const defaultPermissions: UserPermissions = {
-            user_id: userId,
-            can_create_sales: true,
-            can_edit_sales: true,
-            can_delete_sales: true
-          };
           setPermissions(defaultPermissions);
-          setLoading(false);
-          return;
-        }
-        
-        // If table exists, check if permissions exist for this user
-        const { data, error } = await supabase
-          .rpc('get_user_permissions', { user_id: userId });
-        
-        if (error) {
-          // If RPC doesn't exist or other error, use direct query
-          const { data: directData, error: directError } = await supabase
-            .from('user_permissions')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle();
-            
-          if (directError || !directData) {
-            // If no permissions found or error, create default permissions
-            const defaultPermissions: UserPermissions = {
-              user_id: userId,
-              can_create_sales: true,
-              can_edit_sales: true,
-              can_delete_sales: true
-            };
-            
-            setPermissions(defaultPermissions);
-          } else {
-            setPermissions(directData as UserPermissions);
-          }
-        } else {
+        } else if (error) {
+          // Other error occurred
+          console.error('Error fetching permissions:', error);
+          setPermissions(defaultPermissions);
+        } else if (data) {
+          // Successfully fetched permissions
           setPermissions(data as UserPermissions);
+        } else {
+          // No permissions found for this user
+          setPermissions(defaultPermissions);
         }
       } catch (error: any) {
         console.error('Error in useUserPermissions:', error);
@@ -97,16 +79,18 @@ export const useUserPermissions = (userId?: string) => {
     try {
       setLoading(true);
       
-      // Check if the user_permissions table exists
-      const { error: tableCheckError } = await supabase
+      // Try to check if the table exists first
+      const { error: checkError } = await (supabase as any)
         .from('user_permissions')
         .select('count')
         .limit(1)
         .single();
         
-      if (tableCheckError && tableCheckError.code === '42P01') {
+      if (checkError && checkError.code === '42P01') {
+        // Table doesn't exist
         console.error('Table user_permissions does not exist');
-        // Just update local state since table doesn't exist
+        
+        // Just update local state
         const newPermissions: UserPermissions = {
           user_id: userId,
           can_create_sales: updatedPermissions.can_create_sales ?? true,
@@ -118,69 +102,61 @@ export const useUserPermissions = (userId?: string) => {
         return true;
       }
       
-      // Try to update existing permissions
-      const { data, error } = await supabase
-        .rpc('update_user_permissions', { 
-          p_user_id: userId,
-          p_can_create_sales: updatedPermissions.can_create_sales,
-          p_can_edit_sales: updatedPermissions.can_edit_sales,
-          p_can_delete_sales: updatedPermissions.can_delete_sales
-        });
+      // Check if user permissions already exist
+      const { data: existingData } = await (supabase as any)
+        .from('user_permissions')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
         
-      if (error && error.code === '42883') {
-        // If RPC doesn't exist, use direct update
-        const { data: existingData } = await supabase
+      let success = false;
+      
+      if (existingData) {
+        // Update existing permissions
+        const { error: updateError } = await (supabase as any)
           .from('user_permissions')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle();
+          .update(updatedPermissions)
+          .eq('user_id', userId);
           
-        if (existingData) {
-          // Update existing record
-          const { error: updateError } = await supabase
-            .from('user_permissions')
-            .update(updatedPermissions)
-            .eq('user_id', userId);
-            
-          if (updateError) {
-            console.error('Error updating permissions:', updateError);
-            toast.error('Failed to update user permissions');
-            return false;
-          }
-        } else {
-          // Insert new record
-          const newPermissions: UserPermissions = {
-            user_id: userId,
-            can_create_sales: updatedPermissions.can_create_sales ?? true,
-            can_edit_sales: updatedPermissions.can_edit_sales ?? true,
-            can_delete_sales: updatedPermissions.can_delete_sales ?? true
-          };
-          
-          const { error: insertError } = await supabase
-            .from('user_permissions')
-            .insert(newPermissions);
-            
-          if (insertError) {
-            console.error('Error creating permissions:', insertError);
-            toast.error('Failed to create user permissions');
-            return false;
-          }
+        if (updateError) {
+          console.error('Error updating permissions:', updateError);
+          toast.error('Failed to update user permissions');
+          return false;
         }
-      } else if (error) {
-        console.error('Error updating permissions:', error);
-        toast.error('Failed to update user permissions');
-        return false;
+        success = true;
+      } else {
+        // Create new permissions
+        const newPermissions: UserPermissions = {
+          user_id: userId,
+          can_create_sales: updatedPermissions.can_create_sales ?? true,
+          can_edit_sales: updatedPermissions.can_edit_sales ?? true,
+          can_delete_sales: updatedPermissions.can_delete_sales ?? true
+        };
+        
+        const { error: insertError } = await (supabase as any)
+          .from('user_permissions')
+          .insert(newPermissions);
+          
+        if (insertError) {
+          console.error('Error creating permissions:', insertError);
+          toast.error('Failed to create user permissions');
+          return false;
+        }
+        success = true;
       }
       
       // Update local state
-      const newPermissions = {
-        ...permissions,
-        ...updatedPermissions,
-      } as UserPermissions;
+      if (success) {
+        const newPermissions = {
+          ...permissions,
+          ...updatedPermissions,
+        } as UserPermissions;
+        
+        setPermissions(newPermissions);
+        toast.success('User permissions updated successfully');
+      }
       
-      setPermissions(newPermissions);
-      toast.success('User permissions updated successfully');
-      return true;
+      return success;
     } catch (error: any) {
       console.error('Error updating permissions:', error);
       toast.error(`Error: ${error.message}`);
@@ -210,72 +186,41 @@ export const useCurrentUserPermissions = () => {
           return;
         }
         
-        // Check if the user_permissions table exists
-        const { error: tableCheckError } = await supabase
-          .from('user_permissions')
-          .select('count')
-          .limit(1)
-          .single();
+        // Default permissions if nothing is found
+        const defaultPermissions: UserPermissions = {
+          id: 'default',
+          user_id: session.user.id,
+          can_create_sales: true,
+          can_edit_sales: true, 
+          can_delete_sales: true,
+          updated_at: new Date().toISOString()
+        };
+        
+        try {
+          // Use type assertion to bypass TypeScript's strict checking
+          const { data, error } = await (supabase as any)
+            .from('user_permissions')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
           
-        if (tableCheckError && tableCheckError.code === '42P01') {
-          console.error('Table user_permissions does not exist');
-          // Set default permissions if table doesn't exist
-          const defaultPermissions: UserPermissions = {
-            id: 'default',
-            user_id: session.user.id,
-            can_create_sales: true,
-            can_edit_sales: true, 
-            can_delete_sales: true,
-            updated_at: new Date().toISOString()
-          };
+          if (error && error.code === '42P01') {
+            // Table doesn't exist
+            setPermissions(defaultPermissions);
+          } else if (error) {
+            console.error('Error fetching current user permissions:', error);
+            setPermissions(defaultPermissions);
+          } else {
+            // If permissions exist, use them; otherwise, use defaults
+            setPermissions((data as UserPermissions) || defaultPermissions);
+          }
+        } catch (error) {
+          console.error('Error in permissions query:', error);
           setPermissions(defaultPermissions);
-          setLoading(false);
-          return;
-        }
-        
-        // Fetch permissions for the current user
-        const { data, error } = await supabase
-          .from('user_permissions')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        if (error) {
-          // If permissions don't exist, return default permissions (all enabled)
-          const defaultPermissions: UserPermissions = {
-            id: 'default',
-            user_id: session.user.id,
-            can_create_sales: true,
-            can_edit_sales: true, 
-            can_delete_sales: true,
-            updated_at: new Date().toISOString()
-          };
-          setPermissions(defaultPermissions);
-        } else {
-          setPermissions(data as UserPermissions || {
-            id: 'default',
-            user_id: session.user.id,
-            can_create_sales: true,
-            can_edit_sales: true, 
-            can_delete_sales: true,
-            updated_at: new Date().toISOString()
-          });
         }
       } catch (error) {
         console.error('Error in useCurrentUserPermissions:', error);
-        // Set default permissions on error
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const defaultPermissions: UserPermissions = {
-            id: 'default',
-            user_id: session.user.id,
-            can_create_sales: true,
-            can_edit_sales: true, 
-            can_delete_sales: true,
-            updated_at: new Date().toISOString()
-          };
-          setPermissions(defaultPermissions);
-        }
+        setPermissions(null);
       } finally {
         setLoading(false);
       }

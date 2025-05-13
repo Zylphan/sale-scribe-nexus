@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -14,19 +14,19 @@ interface UserPermissionsManagerProps {
 
 export default function UserPermissionsManager({ userId, userName }: UserPermissionsManagerProps) {
   const { permissions, loading, updatePermissions } = useUserPermissions(userId);
-  const [canCreate, setCanCreate] = useState<boolean>(permissions?.can_create_sales ?? true);
-  const [canEdit, setCanEdit] = useState<boolean>(permissions?.can_edit_sales ?? true);
-  const [canDelete, setCanDelete] = useState<boolean>(permissions?.can_delete_sales ?? true);
+  const [canCreate, setCanCreate] = useState<boolean>(true);
+  const [canEdit, setCanEdit] = useState<boolean>(true);
+  const [canDelete, setCanDelete] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState(false);
   
   // Update local state when permissions load
-  useState(() => {
+  useEffect(() => {
     if (permissions) {
       setCanCreate(permissions.can_create_sales);
       setCanEdit(permissions.can_edit_sales);
       setCanDelete(permissions.can_delete_sales);
     }
-  });
+  }, [permissions]);
   
   const handleSave = async () => {
     setIsSaving(true);
