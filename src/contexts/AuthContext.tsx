@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export type UserRole = 'admin' | 'user' | 'blocked';
 
@@ -68,10 +68,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // If user is blocked, sign them out immediately
       if (data.role === 'blocked') {
-        toast({
-          title: "Account Blocked",
-          description: "Your account has been blocked. Please contact an administrator.",
-          variant: "destructive"
+        toast("Account Blocked", {
+          description: "Your account has been blocked. Please contact an administrator."
         });
         await supabase.auth.signOut();
         return;
@@ -102,8 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         if (event === 'SIGNED_IN') {
-          toast({
-            title: "Success",
+          toast("Success", {
             description: "Signed in successfully"
           });
           
@@ -115,8 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             navigate(from, { replace: true });
           }, 0);
         } else if (event === 'SIGNED_OUT') {
-          toast({
-            title: "Info",
+          toast("Info", {
             description: "Signed out"
           });
           setTimeout(() => {
@@ -158,10 +154,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Let the onAuthStateChange handle the navigation
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || 'Failed to sign in',
-        variant: "destructive"
+      toast("Error", {
+        description: error.message || 'Failed to sign in'
       });
       throw error;
     }
@@ -193,22 +187,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Provide more specific error messages for common issues
       if (error.message?.includes('email')) {
-        toast({
-          title: "Error",
-          description: 'Invalid email address or email already in use',
-          variant: "destructive"
+        toast("Error", {
+          description: 'Invalid email address or email already in use'
         });
       } else if (error.message?.includes('password')) {
-        toast({
-          title: "Error",
-          description: 'Password is too weak. Use at least 6 characters',
-          variant: "destructive"
+        toast("Error", {
+          description: 'Password is too weak. Use at least 6 characters'
         });
       } else {
-        toast({
-          title: "Error",
-          description: error.message || 'Failed to create account',
-          variant: "destructive"
+        toast("Error", {
+          description: error.message || 'Failed to create account'
         });
       }
       throw error;
@@ -220,10 +208,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       navigate('/login');
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || 'Failed to sign out',
-        variant: "destructive"
+      toast("Error", {
+        description: error.message || 'Failed to sign out'
       });
     }
   };

@@ -4,12 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface UserPermissions {
-  id: string;
+  id?: string;
   user_id: string;
   can_create_sales: boolean;
   can_edit_sales: boolean;
   can_delete_sales: boolean;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export const useUserPermissions = (userId?: string) => {
@@ -26,45 +26,65 @@ export const useUserPermissions = (userId?: string) => {
       try {
         setLoading(true);
         
-        // Check if permissions exist for this user
-        const { data, error } = await supabase
+        // Check if the user_permissions table exists
+        const { error: tableCheckError } = await supabase
           .from('user_permissions')
-          .select('*')
-          .eq('user_id', userId)
+          .select('count')
+          .limit(1)
           .single();
+          
+        if (tableCheckError && tableCheckError.code === '42P01') {
+          console.error('Table user_permissions does not exist');
+          // Set default permissions if table doesn't exist
+          const defaultPermissions: UserPermissions = {
+            user_id: userId,
+            can_create_sales: true,
+            can_edit_sales: true,
+            can_delete_sales: true
+          };
+          setPermissions(defaultPermissions);
+          setLoading(false);
+          return;
+        }
+        
+        // If table exists, check if permissions exist for this user
+        const { data, error } = await supabase
+          .rpc('get_user_permissions', { user_id: userId });
         
         if (error) {
-          // If no permissions found, create default permissions
-          if (error.code === 'PGRST116') {
-            const defaultPermissions = {
+          // If RPC doesn't exist or other error, use direct query
+          const { data: directData, error: directError } = await supabase
+            .from('user_permissions')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+            
+          if (directError || !directData) {
+            // If no permissions found or error, create default permissions
+            const defaultPermissions: UserPermissions = {
               user_id: userId,
               can_create_sales: true,
               can_edit_sales: true,
-              can_delete_sales: true,
+              can_delete_sales: true
             };
             
-            const { data: newData, error: insertError } = await supabase
-              .from('user_permissions')
-              .insert(defaultPermissions)
-              .select()
-              .single();
-              
-            if (insertError) {
-              console.error('Error creating default permissions:', insertError);
-              toast.error('Failed to set up user permissions');
-            } else {
-              setPermissions(newData);
-            }
+            setPermissions(defaultPermissions);
           } else {
-            console.error('Error fetching permissions:', error);
-            toast.error('Failed to load user permissions');
+            setPermissions(directData as UserPermissions);
           }
         } else {
-          setPermissions(data);
+          setPermissions(data as UserPermissions);
         }
       } catch (error: any) {
         console.error('Error in useUserPermissions:', error);
-        toast.error(`Error: ${error.message}`);
+        // Set default permissions on error
+        const defaultPermissions: UserPermissions = {
+          user_id: userId,
+          can_create_sales: true,
+          can_edit_sales: true,
+          can_delete_sales: true
+        };
+        setPermissions(defaultPermissions);
       } finally {
         setLoading(false);
       }
@@ -77,20 +97,88 @@ export const useUserPermissions = (userId?: string) => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      // Check if the user_permissions table exists
+      const { error: tableCheckError } = await supabase
         .from('user_permissions')
-        .update(updatedPermissions)
-        .eq('user_id', userId)
-        .select()
+        .select('count')
+        .limit(1)
         .single();
+        
+      if (tableCheckError && tableCheckError.code === '42P01') {
+        console.error('Table user_permissions does not exist');
+        // Just update local state since table doesn't exist
+        const newPermissions: UserPermissions = {
+          user_id: userId,
+          can_create_sales: updatedPermissions.can_create_sales ?? true,
+          can_edit_sales: updatedPermissions.can_edit_sales ?? true,
+          can_delete_sales: updatedPermissions.can_delete_sales ?? true
+        };
+        setPermissions(newPermissions);
+        toast.success('User permissions updated successfully (local only)');
+        return true;
+      }
       
-      if (error) {
+      // Try to update existing permissions
+      const { data, error } = await supabase
+        .rpc('update_user_permissions', { 
+          p_user_id: userId,
+          p_can_create_sales: updatedPermissions.can_create_sales,
+          p_can_edit_sales: updatedPermissions.can_edit_sales,
+          p_can_delete_sales: updatedPermissions.can_delete_sales
+        });
+        
+      if (error && error.code === '42883') {
+        // If RPC doesn't exist, use direct update
+        const { data: existingData } = await supabase
+          .from('user_permissions')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        if (existingData) {
+          // Update existing record
+          const { error: updateError } = await supabase
+            .from('user_permissions')
+            .update(updatedPermissions)
+            .eq('user_id', userId);
+            
+          if (updateError) {
+            console.error('Error updating permissions:', updateError);
+            toast.error('Failed to update user permissions');
+            return false;
+          }
+        } else {
+          // Insert new record
+          const newPermissions: UserPermissions = {
+            user_id: userId,
+            can_create_sales: updatedPermissions.can_create_sales ?? true,
+            can_edit_sales: updatedPermissions.can_edit_sales ?? true,
+            can_delete_sales: updatedPermissions.can_delete_sales ?? true
+          };
+          
+          const { error: insertError } = await supabase
+            .from('user_permissions')
+            .insert(newPermissions);
+            
+          if (insertError) {
+            console.error('Error creating permissions:', insertError);
+            toast.error('Failed to create user permissions');
+            return false;
+          }
+        }
+      } else if (error) {
         console.error('Error updating permissions:', error);
         toast.error('Failed to update user permissions');
         return false;
       }
       
-      setPermissions(data);
+      // Update local state
+      const newPermissions = {
+        ...permissions,
+        ...updatedPermissions,
+      } as UserPermissions;
+      
+      setPermissions(newPermissions);
       toast.success('User permissions updated successfully');
       return true;
     } catch (error: any) {
@@ -122,33 +210,72 @@ export const useCurrentUserPermissions = () => {
           return;
         }
         
+        // Check if the user_permissions table exists
+        const { error: tableCheckError } = await supabase
+          .from('user_permissions')
+          .select('count')
+          .limit(1)
+          .single();
+          
+        if (tableCheckError && tableCheckError.code === '42P01') {
+          console.error('Table user_permissions does not exist');
+          // Set default permissions if table doesn't exist
+          const defaultPermissions: UserPermissions = {
+            id: 'default',
+            user_id: session.user.id,
+            can_create_sales: true,
+            can_edit_sales: true, 
+            can_delete_sales: true,
+            updated_at: new Date().toISOString()
+          };
+          setPermissions(defaultPermissions);
+          setLoading(false);
+          return;
+        }
+        
         // Fetch permissions for the current user
         const { data, error } = await supabase
           .from('user_permissions')
           .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         
         if (error) {
           // If permissions don't exist, return default permissions (all enabled)
-          if (error.code === 'PGRST116') {
-            const defaultPermissions = {
-              id: 'default',
-              user_id: session.user.id,
-              can_create_sales: true,
-              can_edit_sales: true, 
-              can_delete_sales: true,
-              updated_at: new Date().toISOString()
-            };
-            setPermissions(defaultPermissions);
-          } else {
-            console.error('Error fetching current user permissions:', error);
-          }
+          const defaultPermissions: UserPermissions = {
+            id: 'default',
+            user_id: session.user.id,
+            can_create_sales: true,
+            can_edit_sales: true, 
+            can_delete_sales: true,
+            updated_at: new Date().toISOString()
+          };
+          setPermissions(defaultPermissions);
         } else {
-          setPermissions(data);
+          setPermissions(data as UserPermissions || {
+            id: 'default',
+            user_id: session.user.id,
+            can_create_sales: true,
+            can_edit_sales: true, 
+            can_delete_sales: true,
+            updated_at: new Date().toISOString()
+          });
         }
       } catch (error) {
         console.error('Error in useCurrentUserPermissions:', error);
+        // Set default permissions on error
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const defaultPermissions: UserPermissions = {
+            id: 'default',
+            user_id: session.user.id,
+            can_create_sales: true,
+            can_edit_sales: true, 
+            can_delete_sales: true,
+            updated_at: new Date().toISOString()
+          };
+          setPermissions(defaultPermissions);
+        }
       } finally {
         setLoading(false);
       }

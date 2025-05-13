@@ -4,6 +4,13 @@ export interface Sale {
   salesdate: string | null;
   custno: string | null;
   empno: string | null;
+  customer?: {
+    custname: string | null;
+  };
+  employee?: {
+    firstname: string | null;
+    lastname: string | null;
+  };
 }
 
 export interface SalesDetail {
