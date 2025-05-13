@@ -1,8 +1,9 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 export type UserRole = 'admin' | 'user' | 'blocked';
 
@@ -67,7 +68,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // If user is blocked, sign them out immediately
       if (data.role === 'blocked') {
-        toast.error('Your account has been blocked. Please contact an administrator.');
+        toast({
+          title: "Account Blocked",
+          description: "Your account has been blocked. Please contact an administrator.",
+          variant: "destructive"
+        });
         await supabase.auth.signOut();
         return;
       }
@@ -97,7 +102,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         if (event === 'SIGNED_IN') {
-          toast.success('Signed in successfully');
+          toast({
+            title: "Success",
+            description: "Signed in successfully"
+          });
           
           // Use setTimeout to avoid potential deadlocks with Supabase auth
           setTimeout(() => {
@@ -107,7 +115,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             navigate(from, { replace: true });
           }, 0);
         } else if (event === 'SIGNED_OUT') {
-          toast.info('Signed out');
+          toast({
+            title: "Info",
+            description: "Signed out"
+          });
           setTimeout(() => {
             console.log("AuthProvider - Redirecting after sign out to: /login");
             navigate('/login');
@@ -147,7 +158,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Let the onAuthStateChange handle the navigation
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to sign in',
+        variant: "destructive"
+      });
       throw error;
     }
   };
@@ -155,7 +170,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       // Clear any previous error toasts
-      toast.dismiss();
       
       const { error } = await supabase.auth.signUp({ 
         email, 
@@ -179,11 +193,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Provide more specific error messages for common issues
       if (error.message?.includes('email')) {
-        toast.error('Invalid email address or email already in use');
+        toast({
+          title: "Error",
+          description: 'Invalid email address or email already in use',
+          variant: "destructive"
+        });
       } else if (error.message?.includes('password')) {
-        toast.error('Password is too weak. Use at least 6 characters');
+        toast({
+          title: "Error",
+          description: 'Password is too weak. Use at least 6 characters',
+          variant: "destructive"
+        });
       } else {
-        toast.error(error.message || 'Failed to create account');
+        toast({
+          title: "Error",
+          description: error.message || 'Failed to create account',
+          variant: "destructive"
+        });
       }
       throw error;
     }
@@ -194,7 +220,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       navigate('/login');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign out');
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to sign out',
+        variant: "destructive"
+      });
     }
   };
 

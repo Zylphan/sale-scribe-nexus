@@ -25,12 +25,20 @@ const Signup = () => {
     // Clear any previous toast messages
     
     if (!fullName || !email || !password || !confirmPassword) {
-      toast.error('All fields are required');
+      toast({
+        title: "Error",
+        description: "All fields are required",
+        variant: "destructive"
+      });
       return;
     }
     
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -38,12 +46,19 @@ const Signup = () => {
     
     try {
       await signUp(email, password, fullName);
-      toast.success('Account created successfully! Please sign in.');
+      toast({
+        title: "Success",
+        description: "Account created successfully! Please sign in."
+      });
       navigate('/login');
     } catch (error: any) {
       console.error("Signup error:", error);
       // Display a more user-friendly error message
-      toast.error(error.message || 'Failed to create account');
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to create account',
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
