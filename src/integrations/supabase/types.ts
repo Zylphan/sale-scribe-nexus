@@ -305,6 +305,33 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          can_create_sales: boolean
+          can_delete_sales: boolean
+          can_edit_sales: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_create_sales?: boolean
+          can_delete_sales?: boolean
+          can_edit_sales?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_create_sales?: boolean
+          can_delete_sales?: boolean
+          can_edit_sales?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

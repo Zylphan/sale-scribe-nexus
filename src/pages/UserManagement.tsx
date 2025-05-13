@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { 
   Table, TableBody, TableCaption, TableCell,
@@ -15,7 +16,7 @@ import { UserRole } from '@/contexts/AuthContext';
 import { useUserProfiles, useUpdateUserRole } from '@/hooks/useUsers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import UserPermissionsManager from '@/components/users/UserPermissionsManager';
-import { Settings } from 'lucide-react';
+import { Settings, Users, RefreshCw } from 'lucide-react';
 
 const UserManagement = () => {
   const { profiles, loading } = useUserProfiles();
@@ -61,11 +62,28 @@ const UserManagement = () => {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">User Management</h1>
+      {/* New Admin Header */}
+      <div className="mb-8 border-b pb-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <Users className="h-8 w-8 mr-2 text-sales-primary" />
+            <h1 className="text-3xl font-bold text-sales-text">User Management</h1>
+          </div>
+          <div className="text-sm text-gray-500">
+            Admin Control Panel
+          </div>
+        </div>
+        <p className="text-gray-600 max-w-3xl">
+          Manage user accounts, assign roles, and configure user permissions. 
+          Use this dashboard to control who can access different features within the sales system.
+        </p>
+      </div>
+      
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-lg font-medium">All Users</h2>
           <Button onClick={() => window.location.reload()} disabled={loading}>
+            <RefreshCw className="h-4 w-4 mr-2" />
             {loading ? 'Loading...' : 'Refresh'}
           </Button>
         </div>

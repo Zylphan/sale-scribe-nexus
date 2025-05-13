@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useSales, SortColumn, SortDirection } from '@/hooks/useSales';
 import { useSalesOperations } from '@/hooks/useSalesOperations';

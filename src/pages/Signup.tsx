@@ -22,19 +22,13 @@ const Signup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Clear any previous toast messages
-    
     if (!fullName || !email || !password || !confirmPassword) {
-      toast("Error", {
-        description: "All fields are required"
-      });
+      toast.error("All fields are required");
       return;
     }
     
     if (password !== confirmPassword) {
-      toast("Error", {
-        description: "Passwords do not match"
-      });
+      toast.error("Passwords do not match");
       return;
     }
     
@@ -42,16 +36,12 @@ const Signup = () => {
     
     try {
       await signUp(email, password, fullName);
-      toast("Success", {
-        description: "Account created successfully! Please sign in."
-      });
+      toast.success("Account created successfully! Please sign in.");
       navigate('/login');
     } catch (error: any) {
       console.error("Signup error:", error);
       // Display a more user-friendly error message
-      toast("Error", {
-        description: error.message || 'Failed to create account'
-      });
+      toast.error(error.message || 'Failed to create account');
     } finally {
       setIsLoading(false);
     }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,21 +34,14 @@ export const useUserPermissions = (userId?: string) => {
           can_delete_sales: true
         };
         
-        // Try to fetch user permissions using a type-safe approach
-        // Here we use `from()` with `any` to bypass TypeScript's strict type checking
-        // because the user_permissions table isn't defined in the generated types
-        const { data, error } = await (supabase as any)
+        // Try to fetch user permissions
+        const { data, error } = await supabase
           .from('user_permissions')
           .select('*')
           .eq('user_id', userId)
           .maybeSingle();
         
-        if (error && error.code === '42P01') {
-          // Table doesn't exist - use default permissions
-          console.error('Table user_permissions does not exist');
-          setPermissions(defaultPermissions);
-        } else if (error) {
-          // Other error occurred
+        if (error) {
           console.error('Error fetching permissions:', error);
           setPermissions(defaultPermissions);
         } else if (data) {
@@ -79,48 +73,31 @@ export const useUserPermissions = (userId?: string) => {
     try {
       setLoading(true);
       
-      // Try to check if the table exists first
-      const { error: checkError } = await (supabase as any)
-        .from('user_permissions')
-        .select('count')
-        .limit(1)
-        .single();
-        
-      if (checkError && checkError.code === '42P01') {
-        // Table doesn't exist
-        console.error('Table user_permissions does not exist');
-        
-        // Just update local state
-        const newPermissions: UserPermissions = {
-          user_id: userId,
-          can_create_sales: updatedPermissions.can_create_sales ?? true,
-          can_edit_sales: updatedPermissions.can_edit_sales ?? true,
-          can_delete_sales: updatedPermissions.can_delete_sales ?? true
-        };
-        setPermissions(newPermissions);
-        toast.success('User permissions updated successfully (local only)');
-        return true;
-      }
-      
       // Check if user permissions already exist
-      const { data: existingData } = await (supabase as any)
+      const { data: existingData, error: checkError } = await supabase
         .from('user_permissions')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
         
+      if (checkError) {
+        console.error('Error checking permissions:', checkError);
+        toast.error('Failed to update permissions');
+        return false;
+      }
+      
       let success = false;
       
       if (existingData) {
         // Update existing permissions
-        const { error: updateError } = await (supabase as any)
+        const { error: updateError } = await supabase
           .from('user_permissions')
           .update(updatedPermissions)
           .eq('user_id', userId);
           
         if (updateError) {
           console.error('Error updating permissions:', updateError);
-          toast.error('Failed to update user permissions');
+          toast.error('Failed to update permissions');
           return false;
         }
         success = true;
@@ -133,13 +110,13 @@ export const useUserPermissions = (userId?: string) => {
           can_delete_sales: updatedPermissions.can_delete_sales ?? true
         };
         
-        const { error: insertError } = await (supabase as any)
+        const { error: insertError } = await supabase
           .from('user_permissions')
           .insert(newPermissions);
           
         if (insertError) {
           console.error('Error creating permissions:', insertError);
-          toast.error('Failed to create user permissions');
+          toast.error('Failed to create permissions');
           return false;
         }
         success = true;
@@ -196,27 +173,19 @@ export const useCurrentUserPermissions = () => {
           updated_at: new Date().toISOString()
         };
         
-        try {
-          // Use type assertion to bypass TypeScript's strict checking
-          const { data, error } = await (supabase as any)
-            .from('user_permissions')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          if (error && error.code === '42P01') {
-            // Table doesn't exist
-            setPermissions(defaultPermissions);
-          } else if (error) {
-            console.error('Error fetching current user permissions:', error);
-            setPermissions(defaultPermissions);
-          } else {
-            // If permissions exist, use them; otherwise, use defaults
-            setPermissions((data as UserPermissions) || defaultPermissions);
-          }
-        } catch (error) {
-          console.error('Error in permissions query:', error);
+        // Try to fetch permissions
+        const { data, error } = await supabase
+          .from('user_permissions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching current user permissions:', error);
           setPermissions(defaultPermissions);
+        } else {
+          // If permissions exist, use them; otherwise, use defaults
+          setPermissions((data as UserPermissions) || defaultPermissions);
         }
       } catch (error) {
         console.error('Error in useCurrentUserPermissions:', error);
