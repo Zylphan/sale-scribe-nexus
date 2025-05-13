@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const Signup = () => {
   const [fullName, setFullName] = useState('');
@@ -25,19 +25,15 @@ const Signup = () => {
     // Clear any previous toast messages
     
     if (!fullName || !email || !password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "All fields are required",
-        variant: "destructive"
+      toast("Error", {
+        description: "All fields are required"
       });
       return;
     }
     
     if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive"
+      toast("Error", {
+        description: "Passwords do not match"
       });
       return;
     }
@@ -46,18 +42,15 @@ const Signup = () => {
     
     try {
       await signUp(email, password, fullName);
-      toast({
-        title: "Success",
+      toast("Success", {
         description: "Account created successfully! Please sign in."
       });
       navigate('/login');
     } catch (error: any) {
       console.error("Signup error:", error);
       // Display a more user-friendly error message
-      toast({
-        title: "Error",
-        description: error.message || 'Failed to create account',
-        variant: "destructive"
+      toast("Error", {
+        description: error.message || 'Failed to create account'
       });
     } finally {
       setIsLoading(false);

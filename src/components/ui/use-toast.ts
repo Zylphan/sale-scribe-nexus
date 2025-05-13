@@ -1,11 +1,11 @@
 
-import { toast } from "sonner";
+// This file is kept for backward compatibility
+import { toast as sonnerToast } from "sonner";
 
-export { toast };
+export const toast = sonnerToast;
 
-// Re-export the toast function for backward compatibility
 export const useToast = () => {
   return {
-    toast
+    toast: sonnerToast
   };
 };

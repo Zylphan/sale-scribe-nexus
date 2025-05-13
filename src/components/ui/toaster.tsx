@@ -1,8 +1,8 @@
 
+// This file is kept for backward compatibility but its functionality 
+// has been replaced by the direct import from sonner in App.tsx
 import { Toaster as SonnerToaster } from "sonner";
 
-type ToasterProps = React.ComponentProps<typeof SonnerToaster>;
-
-export function Toaster(props: ToasterProps) {
-  return <SonnerToaster {...props} />;
+export function Toaster() {
+  return null; // Return null to avoid double-rendering toasts
 }
