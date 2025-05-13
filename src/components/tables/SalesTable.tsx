@@ -7,6 +7,7 @@ import SalesTableHeader from '../sales/SalesTableHeader';
 import SalesTableList from '../sales/SalesTableList';
 import SalesDetailsDialog from '../sales/SalesDetailsDialog';
 import SaleEditForm from '../sales/SaleEditForm';
+import { useCurrentUserPermissions } from '@/hooks/useUserPermissions';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -30,6 +31,7 @@ const SalesTable = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const { deleteSale } = useSalesOperations();
+  const { permissions, loading: loadingPermissions } = useCurrentUserPermissions();
 
   const handleSort = (column: SortColumn) => {
     if (column === sortColumn) {
@@ -48,13 +50,23 @@ const SalesTable = () => {
   };
 
   const handleEditSale = (transno: string) => {
-    setSelectedSale(transno);
-    setIsEditOpen(true);
+    // Check if user has edit permission
+    if (permissions?.can_edit_sales) {
+      setSelectedSale(transno);
+      setIsEditOpen(true);
+    } else {
+      toast.error("You don't have permission to edit sales");
+    }
   };
 
   const handleDeleteSale = (transno: string) => {
-    setSelectedSale(transno);
-    setIsDeleteAlertOpen(true);
+    // Check if user has delete permission
+    if (permissions?.can_delete_sales) {
+      setSelectedSale(transno);
+      setIsDeleteAlertOpen(true);
+    } else {
+      toast.error("You don't have permission to delete sales");
+    }
   };
 
   const confirmDeleteSale = async () => {
@@ -91,6 +103,8 @@ const SalesTable = () => {
               onViewDetails={handleViewDetails}
               onEditSale={handleEditSale}
               onDeleteSale={handleDeleteSale}
+              canEdit={permissions?.can_edit_sales || false}
+              canDelete={permissions?.can_delete_sales || false}
             />
           </Table>
         </div>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Table, TableBody, TableCaption, TableCell,
   TableHead, TableHeader, TableRow 
@@ -11,14 +11,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { UserRole } from '@/contexts/AuthContext';
 import { useUserProfiles, useUpdateUserRole } from '@/hooks/useUsers';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import UserPermissionsManager from '@/components/users/UserPermissionsManager';
+import { Settings } from 'lucide-react';
 
 const UserManagement = () => {
   const { profiles, loading } = useUserProfiles();
   const { updateRole, updating } = useUpdateUserRole();
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
 
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
@@ -49,6 +54,12 @@ const UserManagement = () => {
       toast.success(`User role updated successfully to ${role}`);
     }
   };
+  
+  const openPermissionsDialog = (userId: string, userName: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserName(userName || 'User');
+    setIsPermissionsDialogOpen(true);
+  };
 
   return (
     <div className="container mx-auto py-10">
@@ -73,13 +84,14 @@ const UserManagement = () => {
                 <TableHead>Role</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Last Sign In</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Role Actions</TableHead>
+                <TableHead>Permissions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {profiles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     No users found
                   </TableCell>
                 </TableRow>
@@ -111,6 +123,16 @@ const UserManagement = () => {
                         </SelectContent>
                       </Select>
                     </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => openPermissionsDialog(user.id, user.full_name || '')}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Permissions
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -118,6 +140,20 @@ const UserManagement = () => {
           </Table>
         )}
       </div>
+      
+      <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>User Permissions for {selectedUserName}</DialogTitle>
+          </DialogHeader>
+          {selectedUserId && (
+            <UserPermissionsManager 
+              userId={selectedUserId} 
+              userName={selectedUserName} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

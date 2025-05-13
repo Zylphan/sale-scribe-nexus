@@ -1,93 +1,110 @@
 
-import { format } from 'date-fns';
-import { Sale } from '@/hooks/useSales';
-import { 
-  TableBody, 
-  TableCell, 
-  TableRow 
-} from '@/components/ui/table';
+import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { Eye, Pen, Trash } from 'lucide-react';
+import { Sale } from '@/hooks/types/sales';
 
 interface SalesTableListProps {
   sales: Sale[];
   loading: boolean;
   onViewDetails: (transno: string) => void;
-  onEditSale?: (transno: string) => void;
-  onDeleteSale?: (transno: string) => void;
+  onEditSale: (transno: string) => void;
+  onDeleteSale: (transno: string) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-const SalesTableList = ({ 
-  sales, 
-  loading, 
+const SalesTableList = ({
+  sales,
+  loading,
   onViewDetails,
   onEditSale,
-  onDeleteSale
+  onDeleteSale,
+  canEdit = true,
+  canDelete = true
 }: SalesTableListProps) => {
+  
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    return format(new Date(dateString), 'MMM dd, yyyy');
+    if (!dateString) return 'No date';
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (e) {
+      return 'Invalid date';
+    }
   };
-
+  
   if (loading) {
     return (
       <TableBody>
         <TableRow>
-          <TableCell colSpan={5} className="text-center py-4">Loading sales data...</TableCell>
+          <TableCell colSpan={5} className="text-center py-10">
+            Loading sales data...
+          </TableCell>
         </TableRow>
       </TableBody>
     );
   }
-
+  
   if (sales.length === 0) {
     return (
       <TableBody>
         <TableRow>
-          <TableCell colSpan={5} className="text-center py-4">No sales data available</TableCell>
+          <TableCell colSpan={5} className="text-center py-10">
+            No sales found. Try adjusting your search criteria.
+          </TableCell>
         </TableRow>
       </TableBody>
     );
   }
-
+  
   return (
     <TableBody>
       {sales.map((sale) => (
-        <TableRow key={sale.transno} className="border-b">
-          <TableCell className="px-4 py-2">{sale.transno}</TableCell>
-          <TableCell className="px-4 py-2">{formatDate(sale.salesdate)}</TableCell>
-          <TableCell className="px-4 py-2">{sale.custno || '-'}</TableCell>
-          <TableCell className="px-4 py-2">{sale.empno || '-'}</TableCell>
-          <TableCell className="px-4 py-2 flex space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => onViewDetails(sale.transno)}
-              className="text-sales-secondary border-sales-secondary hover:bg-sales-secondary hover:text-white"
-            >
-              Show Details
-            </Button>
-            {onEditSale && (
-              <Button 
-                variant="outline" 
+        <TableRow key={sale.transno}>
+          <TableCell className="font-medium">{sale.transno}</TableCell>
+          <TableCell>{formatDate(sale.salesdate)}</TableCell>
+          <TableCell>{sale.customer?.custname || 'No customer'}</TableCell>
+          <TableCell>
+            {sale.employee
+              ? `${sale.employee.firstname} ${sale.employee.lastname}`
+              : 'No employee'
+            }
+          </TableCell>
+          <TableCell>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={() => onEditSale(sale.transno)}
-                className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white"
+                onClick={() => onViewDetails(sale.transno)}
               >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
+                <Eye className="h-4 w-4" />
+                <span className="sr-only">View</span>
               </Button>
-            )}
-            {onDeleteSale && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => onDeleteSale(sale.transno)}
-                className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
-              </Button>
-            )}
+              
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEditSale(sale.transno)}
+                >
+                  <Pen className="h-4 w-4" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+              )}
+              
+              {canDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-500 hover:bg-red-50"
+                  onClick={() => onDeleteSale(sale.transno)}
+                >
+                  <Trash className="h-4 w-4" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              )}
+            </div>
           </TableCell>
         </TableRow>
       ))}

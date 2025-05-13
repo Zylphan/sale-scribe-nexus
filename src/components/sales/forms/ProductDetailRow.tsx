@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
 import { FormValues } from './types';
-import ProductSearchSelect from './ProductSearchSelect';
+import ProductSelectDropdown from './ProductSelectDropdown';
 
 interface ProductDetailRowProps {
   index: number;
@@ -30,7 +30,7 @@ export default function ProductDetailRow({
 
   return (
     <div className="grid grid-cols-12 gap-3 items-end border p-3 rounded-md">
-      {/* Product - Updated to use ProductSearchSelect */}
+      {/* Product - Updated to use ProductSelectDropdown */}
       <div className="col-span-5">
         <FormField
           control={form.control}
@@ -38,7 +38,7 @@ export default function ProductDetailRow({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Product</FormLabel>
-              <ProductSearchSelect
+              <ProductSelectDropdown
                 value={field.value}
                 onChange={(value) => onProductChange(value, index)}
                 disabled={field.disabled}

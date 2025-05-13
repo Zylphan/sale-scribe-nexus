@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 const Signup = () => {
   const [fullName, setFullName] = useState('');
@@ -23,7 +23,6 @@ const Signup = () => {
     e.preventDefault();
     
     // Clear any previous toast messages
-    toast.dismiss();
     
     if (!fullName || !email || !password || !confirmPassword) {
       toast.error('All fields are required');
