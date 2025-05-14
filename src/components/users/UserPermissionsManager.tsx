@@ -9,7 +9,8 @@ import { useUpdateUserRole } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface UserPermissionsManagerProps {
   userId: string;
@@ -95,56 +96,93 @@ export default function UserPermissionsManager({
         <CardTitle>User Permissions</CardTitle>
         <CardDescription>Configure what {userName} can do in the system</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {isAdmin && !isTargetAdmin && (
+      <CardContent className="space-y-6">
+        {/* Access Control Section */}
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label htmlFor="is-blocked" className="flex-1">Block User Access</Label>
-            <Switch 
-              id="is-blocked" 
-              checked={isBlocked}
-              onCheckedChange={handleBlockToggle}
-              disabled={updating}
-            />
+            <div className="space-y-1">
+              <Label htmlFor="is-blocked" className="text-base font-semibold">
+                Access Control
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {isBlocked ? 'User is currently blocked from accessing the system' : 'User has normal access to the system'}
+              </p>
+            </div>
+            {isAdmin && !isTargetAdmin && (
+              <Button
+                variant={isBlocked ? "default" : "destructive"}
+                size="lg"
+                onClick={handleBlockToggle}
+                disabled={updating}
+                className="min-w-[120px]"
+              >
+                {isBlocked ? (
+                  <>
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    Unblock
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="h-4 w-4 mr-2" />
+                    Block
+                  </>
+                )}
+              </Button>
+            )}
           </div>
-        )}
 
-        {isBlocked && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              This user is currently blocked and cannot access the system
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="flex items-center justify-between">
-          <Label htmlFor="can-create" className="flex-1">Create New Sale</Label>
-          <Switch 
-            id="can-create" 
-            checked={canCreate}
-            onCheckedChange={setCanCreate}
-            disabled={isBlocked}
-          />
+          {isBlocked && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                This user is currently blocked and cannot access the system. All permissions are disabled.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
-        
-        <div className="flex items-center justify-between">
-          <Label htmlFor="can-edit" className="flex-1">Edit Sales</Label>
-          <Switch 
-            id="can-edit" 
-            checked={canEdit}
-            onCheckedChange={setCanEdit}
-            disabled={isBlocked}
-          />
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <Label htmlFor="can-delete" className="flex-1">Delete Sales</Label>
-          <Switch 
-            id="can-delete" 
-            checked={canDelete}
-            onCheckedChange={setCanDelete}
-            disabled={isBlocked}
-          />
+
+        <Separator />
+
+        {/* Feature Permissions Section */}
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold">Feature Permissions</h3>
+            <p className="text-sm text-muted-foreground">
+              Control what features this user can access
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="can-create" className="flex-1">Create New Sale</Label>
+              <Switch 
+                id="can-create" 
+                checked={canCreate}
+                onCheckedChange={setCanCreate}
+                disabled={isBlocked}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="can-edit" className="flex-1">Edit Sales</Label>
+              <Switch 
+                id="can-edit" 
+                checked={canEdit}
+                onCheckedChange={setCanEdit}
+                disabled={isBlocked}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <Label htmlFor="can-delete" className="flex-1">Delete Sales</Label>
+              <Switch 
+                id="can-delete" 
+                checked={canDelete}
+                onCheckedChange={setCanDelete}
+                disabled={isBlocked}
+              />
+            </div>
+          </div>
         </div>
       </CardContent>
       <CardFooter>
