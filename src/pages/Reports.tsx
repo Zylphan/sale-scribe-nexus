@@ -26,6 +26,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import AppHeader from '@/components/AppHeader';
 
 const Reports = () => {
   const { signOut } = useAuth();
@@ -86,39 +87,7 @@ const Reports = () => {
 
   return (
     <div className="min-h-screen bg-sales-background">
-      <header className="bg-sales-primary text-white p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">Sales Management System</h1>
-          <div className="flex items-center space-x-4">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link to="/dashboard">
-                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary border border-white`}>
-                      Dashboard
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/reports">
-                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-sales-secondary text-white hover:bg-sales-primary hover:text-white border border-white`}>
-                      Reports
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-            <Button 
-              variant="outline" 
-              onClick={signOut}
-              className="text-white border-white hover:bg-white hover:text-sales-primary bg-transparent"
-            >
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-      
+      <AppHeader />
       <main className="container mx-auto p-6">
         {!selectedTransaction ? (
           <Card>

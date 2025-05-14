@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSales } from "@/hooks/useSales";
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
+import AppHeader from '@/components/AppHeader';
 
 const Dashboard = () => {
   const { signOut, user, isAdmin } = useAuth();
@@ -27,49 +27,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-sales-background">
-      <header className="bg-sales-primary text-white p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">Sales Management System</h1>
-          <div className="flex items-center space-x-4">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link to="/dashboard">
-                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-sales-secondary text-white hover:bg-sales-primary hover:text-white border border-white`}>
-                      Dashboard
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/reports">
-                    <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary border border-white`}>
-                      Reports
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-                {isAdmin() && (
-                  <NavigationMenuItem>
-                    <Link to="/users">
-                      <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-sales-primary border border-white flex items-center gap-1`}>
-                        <Users size={16} />
-                        User Management
-                      </NavigationMenuLink>
-                    </Link>
-                  </NavigationMenuItem>
-                )}
-              </NavigationMenuList>
-            </NavigationMenu>
-            <Button 
-              variant="outline" 
-              onClick={signOut}
-              className="text-white border-white hover:bg-white hover:text-sales-primary bg-transparent"
-            >
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-      
+      <AppHeader />
       <main className="container mx-auto p-6">
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-2xl font-bold text-sales-text mb-4">Welcome to your Dashboard</h2>

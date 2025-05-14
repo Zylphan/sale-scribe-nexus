@@ -12,9 +12,20 @@ import { useUserProfiles } from '@/hooks/useUsers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import UserPermissionsManager from '@/components/users/UserPermissionsManager';
 import { Settings, Users, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
+import { Link } from 'react-router-dom';
+import AppHeader from '@/components/AppHeader';
 
 const UserManagement = () => {
   const { profiles, loading, refresh } = useUserProfiles();
+  const { signOut, isAdmin } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
   const [selectedUserRole, setSelectedUserRole] = useState<UserRole>('user');
@@ -50,115 +61,103 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      {/* Sales Management System Header */}
-      <div className="bg-gradient-to-r from-sales-primary/90 to-sales-primary p-6 rounded-lg shadow-lg mb-8 text-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Sales Management System</h1>
-            <p className="mt-2 text-white/80">Managing your sales team and performance</p>
-          </div>
-          <div className="mt-4 md:mt-0">
-            <span className="inline-block bg-white/20 px-4 py-2 rounded-full text-sm">
+    <div className="min-h-screen bg-sales-background">
+      <AppHeader />
+      <main className="container mx-auto py-10">
+        {/* Admin Header */}
+        <div className="mb-8 border-b pb-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 mr-2 text-sales-primary" />
+              <h1 className="text-3xl font-bold text-sales-text">User Management</h1>
+            </div>
+            <div className="text-sm text-gray-500">
               Admin Control Panel
-            </span>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Admin Header */}
-      <div className="mb-8 border-b pb-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <Users className="h-8 w-8 mr-2 text-sales-primary" />
-            <h1 className="text-3xl font-bold text-sales-text">User Management</h1>
-          </div>
-          <div className="text-sm text-gray-500">
-            Admin Control Panel
-          </div>
-        </div>
-        <p className="text-gray-600 max-w-3xl">
-          Manage user accounts, assign roles, and configure user permissions. 
-          Use this dashboard to control who can access different features within the sales system.
-        </p>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-medium">All Users</h2>
-          <Button onClick={refresh} disabled={loading}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {loading ? 'Loading...' : 'Refresh'}
-          </Button>
+          <p className="text-gray-600 max-w-3xl">
+            Manage user accounts, assign roles, and configure user permissions. 
+            Use this dashboard to control who can access different features within the sales system.
+          </p>
         </div>
         
-        {loading ? (
-          <div className="p-8 text-center">Loading user data...</div>
-        ) : (
-          <Table>
-            <TableCaption>A list of all users in the system.</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Last Sign In</TableHead>
-                <TableHead>Permissions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profiles.length === 0 ? (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="p-4 border-b flex justify-between items-center">
+            <h2 className="text-lg font-medium">All Users</h2>
+            <Button onClick={refresh} disabled={loading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {loading ? 'Loading...' : 'Refresh'}
+            </Button>
+          </div>
+          
+          {loading ? (
+            <div className="p-8 text-center">Loading user data...</div>
+          ) : (
+            <Table>
+              <TableCaption>A list of all users in the system.</TableCaption>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    No users found
-                  </TableCell>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Last Sign In</TableHead>
+                  <TableHead>Permissions</TableHead>
                 </TableRow>
-              ) : (
-                profiles.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.full_name || 'No name'}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(user.created_at)}</TableCell>
-                    <TableCell>{formatDate(user.last_sign_in)}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openPermissionsDialog(user.id, user.full_name || '', user.role)}
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        Permissions
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {profiles.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      No users found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-      
-      <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>User Permissions for {selectedUserName}</DialogTitle>
-          </DialogHeader>
-          {selectedUserId && (
-            <UserPermissionsManager 
-              userId={selectedUserId} 
-              userName={selectedUserName}
-              userRole={selectedUserRole}
-              onPermissionsUpdate={refresh}
-            />
+                ) : (
+                  profiles.map(user => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.full_name || 'No name'}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Badge className={getRoleBadgeColor(user.role)}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{formatDate(user.created_at)}</TableCell>
+                      <TableCell>{formatDate(user.last_sign_in)}</TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openPermissionsDialog(user.id, user.full_name || '', user.role)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Permissions
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+        
+        <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>User Permissions for {selectedUserName}</DialogTitle>
+            </DialogHeader>
+            {selectedUserId && (
+              <UserPermissionsManager 
+                userId={selectedUserId} 
+                userName={selectedUserName}
+                userRole={selectedUserRole}
+                onPermissionsUpdate={refresh}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      </main>
     </div>
   );
 };

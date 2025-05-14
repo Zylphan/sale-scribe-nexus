@@ -59,7 +59,7 @@ export default function UserPermissionsManager({
     
     if (success) {
       setIsBlocked(!isBlocked);
-      toast.success(User ${newRole === 'blocked' ? 'blocked' : 'unblocked'} successfully);
+      toast.success(`User ${newRole === 'blocked' ? 'blocked' : 'unblocked'} successfully`);
       onPermissionsUpdate?.();
     }
   };

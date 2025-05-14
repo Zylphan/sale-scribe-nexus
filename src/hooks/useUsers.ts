@@ -51,7 +51,7 @@ export function useUserCount() {
         }
       } catch (error: any) {
         console.error("Error fetching user count:", error.message);
-        toast.error(Error fetching user count: ${error.message});
+        toast.error(`Error fetching user count: ${error.message}`);
         
         // Fallback to at least counting the current user
         const { data: { session } } = await supabase.auth.getSession();
@@ -139,7 +139,7 @@ export function useUserProfiles() {
       setProfiles(data || []);
     } catch (error: any) {
       console.error('Error fetching user profiles:', error);
-      toast.error(Error fetching user profiles: ${error.message});
+      toast.error(`Error fetching user profiles: ${error.message}`);
       setProfiles([]);
     } finally {
       setLoading(false);
@@ -210,7 +210,7 @@ export function useUpdateUserRole() {
       return true;
     } catch (error: any) {
       console.error('Error updating user role:', error);
-      toast.error(Failed to update user role: ${error.message});
+      toast.error(`Failed to update user role: ${error.message}`);
       return false;
     } finally {
       setUpdating(false);

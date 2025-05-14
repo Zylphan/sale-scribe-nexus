@@ -161,29 +161,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      // Clear any previous error toasts
-      
-      const { error } = await supabase.auth.signUp({ 
-        email, 
+      const { error } = await supabase.auth.signUp({
+        email,
         password,
         options: {
           data: {
-            full_name: fullName,
+            full_name: fullName, // Store in user_metadata
           }
         }
       });
-      
+
       if (error) {
         console.error("Signup error details:", error);
         throw error;
       }
-      
+
       // On successful signup
       return;
     } catch (error: any) {
-      console.error("Signup error in AuthContext:", error);
-      
-      // Provide more specific error messages for common issues
       if (error.message?.includes('email')) {
         toast("Error", {
           description: 'Invalid email address or email already in use'
@@ -203,12 +198,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      navigate('/login');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+
+      // Remove Supabase session from localStorage
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-tnewnhmliqzaxveettrn-auth-token');
+
+      if (session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          if (!error.message || !error.message.includes("Auth session missing")) {
+            throw error;
+          }
+        }
+      }
+
+      navigate('/login', { replace: true });
     } catch (error: any) {
-      toast("Error", {
-        description: error.message || 'Failed to sign out'
-      });
+      console.error("Error signing out:", error);
+      if (!error?.message || !error.message.includes("Auth session missing")) {
+        toast.error(`Failed to sign out: ${error?.message || error}`);
+      }
+      navigate('/login', { replace: true });
     }
   };
 
