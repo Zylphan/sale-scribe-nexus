@@ -108,7 +108,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Cleanup function to unsubscribe
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe(); // Ensure `subscription` exists before calling `unsubscribe`
+      }
+    };
   }, [navigate]);
 
   const isAdmin = () => profile?.role === 'admin';
