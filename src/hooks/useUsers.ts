@@ -3,6 +3,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserRole } from '@/contexts/AuthContext';
 
+// Define a type for the expected user_metadata structure
+interface AuthUserMetadata {
+  full_name?: string;
+  role?: string; // Role is stored as a string in metadata
+}
+
+// Helper function to check if a value is a valid UserRole
+function isValidUserRole(role: any): role is UserRole {
+  return role !== null && typeof role === 'string' && (role === 'admin' || role === 'user' || role === 'blocked');
+}
+
 export interface UserProfile {
   id: string;
   email: string | null;
@@ -10,6 +21,12 @@ export interface UserProfile {
   role: UserRole;
   created_at: string;
   last_sign_in: string | null;
+  is_banned: boolean;
+}
+
+// Define a simple type for the banned_users data we expect
+interface BannedUserRow {
+  user_id: string;
 }
 
 export function useUserCount() {
@@ -74,9 +91,9 @@ export function useUserProfiles() {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      console.log("Fetching user profiles...");
+      console.log("Fetching user profiles and banned status...");
       
-      // Call the new Edge Function to get auth users
+      // Call the Edge Function to get auth users
       const { data: authUsersData, error: authError } = await supabase.functions.invoke('list-auth-users');
       
       if (authError) {
@@ -86,57 +103,58 @@ export function useUserProfiles() {
       
       if (!authUsersData || !Array.isArray(authUsersData.users)) {
         console.error("Invalid data from list-auth-users function:", authUsersData);
-        // Fallback to just fetching profiles if auth users data is bad
-        console.log("Falling back to profiles table only due to bad auth users data");
-         const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, email, full_name, role, created_at, last_sign_in')
-            .order('created_at', { ascending: false });
-
-          if (profilesError) {
-             console.error("Error fetching profiles in fallback:", profilesError);
-             toast.error(`Error fetching profiles fallback: ${profilesError.message}`);
-             throw profilesError;
-           }
-           setProfiles(profilesData || []);
-           return;
+        // If auth users data is bad, set profiles to empty and stop.
+        setProfiles([]);
+        setLoading(false);
+        return;
       }
 
-      console.log("Fetched auth users:", authUsersData.users.length);
-      
-      // Now get profiles from the profiles table
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, role, created_at, last_sign_in');
-        
-      if (profilesError) {
-        console.error("Error fetching profiles after auth users fetch:", profilesError);
-        toast.error(`Error fetching profiles: ${profilesError.message}`);
-        throw profilesError;
+      console.log("Fetched auth users data (raw):", authUsersData); // Log raw data
+      console.log("Fetched auth users count:", authUsersData.users.length);
+
+      // Fetch data from the new banned_users table, casting 'from' to 'any' to bypass strict type checking
+      const { data: bannedUsersData, error: bannedUsersError } = await (supabase.from as any)('banned_users')
+        .select('user_id');
+
+      if (bannedUsersError) {
+        console.error("Error fetching banned users:", bannedUsersError);
+        // Continue with profiles even if fetching banned users fails
       }
 
-      // Build a map of profiles by user ID for quick lookup
-      const profileMap = new Map();
-      (profilesData || []).forEach(profile => {
-        profileMap.set(profile.id, profile);
-      });
+      // Create a Set of banned user IDs for quick lookup, using the custom interface
+      const bannedUserIds = new Set(bannedUsersData?.map((b: BannedUserRow) => b.user_id) || []);
+      console.log('Fetched banned user IDs:', Array.from(bannedUserIds));
       
-      // Combine the data, using profile data when available
-      const combinedProfiles = authUsersData.users.map(user => {
-        const profile = profileMap.get(user.id);
+      // Directly use the auth users data to build the profiles list
+      const combinedProfiles: UserProfile[] = authUsersData.users.map(user => {
+        // Get user_metadata with the defined type
+        const userMetadata = user.user_metadata as AuthUserMetadata | null;
+
+        // Safely access and validate the role from user_metadata
+        const metadataRole = userMetadata?.role;
+        const role: UserRole = isValidUserRole(metadataRole)
+          ? metadataRole
+          : 'user'; // Default to 'user' if metadata role is invalid or missing
+
+        // Determine banned status based on the banned_users table
+        const is_banned = bannedUserIds.has(user.id);
+
         return {
           id: user.id,
           email: user.email,
-          full_name: profile?.full_name || user.user_metadata?.full_name || null,
-          // Explicitly take role from profile data, fallback to auth user metadata, then default
-          role: profile?.role || (user.user_metadata as any)?.role || 'user',
-          created_at: profile?.created_at || user.created_at || new Date().toISOString(),
-          last_sign_in: profile?.last_sign_in || user.last_sign_in || null
-        };
+          full_name: userMetadata?.full_name || null, // Get full_name from validated metadata
+          role: role,
+          created_at: user.created_at, // Use created_at from auth user
+          last_sign_in: user.last_sign_in_at || null, // Use last_sign_in_at from auth user
+          is_banned: is_banned // Use banned status from banned_users table
+        } as UserProfile; // Explicitly cast to UserProfile
       });
-      
+
+      console.log("Combined profiles data (processed):", combinedProfiles); // Log processed data
+
+      // Update the profiles state after data is processed
       setProfiles(combinedProfiles);
-      
+
     } catch (error: any) {
       console.error('Error fetching user profiles (overall):', error);
       toast.error(`Error fetching user profiles: ${error.message}`);
@@ -181,7 +199,7 @@ export function useUpdateUserRole() {
       
       if (!data?.success) {
         console.error('Edge function returned unsuccessful response:', data);
-        throw new Error('Failed to update user role');
+        throw new Error(data?.error || 'Failed to update user role');
       }
       
       // Refresh the user's session to get updated metadata
@@ -190,9 +208,6 @@ export function useUpdateUserRole() {
         console.error('Error refreshing session:', refreshError);
         // Don't fail the operation if refresh fails
       }
-      
-      // Force a reload of the user profiles in the UI
-      window.location.reload();
       
       return true;
     } catch (error: any) {

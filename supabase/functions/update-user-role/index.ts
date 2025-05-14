@@ -70,53 +70,140 @@ serve(async (req) => {
          );
      }
 
+    // // Check if profile exists in profiles table - Commenting out as per new strategy
+    // const { data: existingProfile, error: fetchProfileError } = await supabase
+    //   .from('profiles')
+    //   .select('id, email, full_name') // Select minimal fields needed for potential insert
+    //   .eq('id', userId)
+    //   .single();
 
-    // Check if profile exists in profiles table
-    const { data: existingProfile, error: fetchProfileError } = await supabase
-      .from('profiles')
-      .select('id, email, full_name') // Select minimal fields needed for potential insert
-      .eq('id', userId)
-      .single();
+    // if (fetchProfileError && fetchProfileError.code !== 'PGRST116') { // PGRST116 means no row found
+    //      console.error('Error fetching existing profile:', fetchProfileError);
+    //      throw fetchProfileError; // Re-throw if it's an actual error, not just "not found"
+    //  }
 
-    if (fetchProfileError && fetchProfileError.code !== 'PGRST116') { // PGRST116 means no row found
-         console.error('Error fetching existing profile:', fetchProfileError);
-         throw fetchProfileError; // Re-throw if it's an actual error, not just "not found"
-     }
+    // let updateOrInsertError = null;
 
-    let updateOrInsertError = null;
+    // if (existingProfile) {
+    //   // Profile exists, update the role
+    //   console.log('Profile found, attempting to update role...');
+    //   try {
+    //     const { error } = await supabase
+    //       .from('profiles')
+    //       .update({ role: role, last_sign_in: new Date().toISOString() }) // Also update last_sign_in on role change? Optional.
+    //       .eq('id', userId);
+    //     updateOrInsertError = error;
+    //   } catch (error: any) {
+    //     console.error('Exception during profile update:', error);
+    //     updateOrInsertError = error; // Assign the caught exception as the error
+    //   }
 
-    if (existingProfile) {
-      // Profile exists, update the role
-      console.log('Profile found, updating role...');
+    // } else {
+    //   // Profile does not exist, create a new one
+    //   console.log('Profile not found, attempting to create new profile...');
+    //   try {
+    //     const { error } = await supabase
+    //       .from('profiles')
+    //       .insert([
+    //         {
+    //           id: userId,
+    //           email: authUser.user.email, // Assuming you store email in profiles
+    //           full_name: authUser.user.user_metadata?.full_name || null, // Assuming full_name is in user_metadata
+    //           role: role,
+    //           created_at: new Date().toISOString(), // Set creation time
+    //           last_sign_in: new Date().toISOString(), // Set sign-in time
+    //         }
+    //       ]);
+    //     updateOrInsertError = error;
+    //   } catch (error: any) {
+    //     console.error('Exception during profile insert:', error);
+    //     updateOrInsertError = error; // Assign the caught exception as the error
+    //   }
+    // }
+
+    // if (updateOrInsertError) {
+    //     console.error('Database update/insert error:', updateOrInsertError);
+    //     // Log error but continue to attempt auth user update
+    // }
+
+    // // Log success after profile update/insert - This log might be reached even if updateOrInsertError is true now.
+    // if (!updateOrInsertError) {
+    //     console.log('Profile table update/insert successful.');
+    // }
+
+    let bannedUsersError = null;
+
+    if (role === 'blocked') {
+      console.log(`Attempting to ban user ${userId} in banned_users table.`);
+      // Insert or update banned_until date in banned_users table
       const { error } = await supabase
-        .from('profiles')
-        .update({ role: role, last_sign_in: new Date().toISOString() }) // Also update last_sign_in on role change? Optional.
-        .eq('id', userId);
-      updateOrInsertError = error;
-
-    } else {
-      // Profile does not exist, create a new one
-      console.log('Profile not found, creating new profile...');
-      // You might need to fetch email/full_name from authUser if you store them in profiles
-      const { error } = await supabase
-        .from('profiles')
-        .insert([
+        .from('banned_users')
+        .upsert(
           {
-            id: userId,
-            email: authUser.user.email, // Assuming you store email in profiles
-            full_name: authUser.user.user_metadata?.full_name || null, // Assuming full_name is in user_metadata
-            role: role,
-            created_at: new Date().toISOString(), // Set creation time
-            last_sign_in: new Date().toISOString(), // Set sign-in time
-          }
-        ]);
-        updateOrInsertError = error;
+            user_id: userId,
+            // Set banned_until to a future date (e.g., end of 2099) to indicate a ban
+            banned_until: '2099-12-31T23:59:59Z', 
+            // banned_at defaults to now()
+          },
+          { onConflict: 'user_id' } // Upsert based on user_id
+        );
+      bannedUsersError = error;
+      if (bannedUsersError) {
+        console.error('Error banning user in banned_users table:', bannedUsersError);
+      } else {
+        console.log(`User ${userId} banned successfully in banned_users table.`);
+      }
+    } else {
+      console.log(`Attempting to unban user ${userId} from banned_users table.`);
+      // Remove user from banned_users table
+      const { error } = await supabase
+        .from('banned_users')
+        .delete()
+        .eq('user_id', userId);
+      bannedUsersError = error;
+       if (bannedUsersError) {
+        console.error('Error unbanning user from banned_users table:', bannedUsersError);
+      } else {
+        console.log(`User ${userId} unbanned successfully from banned_users table.`);
+      }
     }
 
-    if (updateOrInsertError) {
-        console.error('Database update/insert error:', updateOrInsertError);
+    // We still need to update the role in the profiles table for consistency
+    let profileUpdateError = null;
+    console.log(`Attempting to update role for user ${userId} in profiles table to ${role}`);
+    const { error: updateProfileError } = await supabase
+      .from('profiles')
+      .update({ role: role })
+      .eq('id', userId);
+    profileUpdateError = updateProfileError;
+
+    if (profileUpdateError) {
+        console.error('Error updating role in profiles table:', profileUpdateError);
+    } else {
+        console.log('Role updated successfully in profiles table.');
+    }
+
+    // Determine overall success based on banned_users operation and profile update
+    if (!bannedUsersError && !profileUpdateError) {
+        console.log('Overall role and ban status update successful.');
         return new Response(
-            JSON.stringify({ success: false, error: updateOrInsertError.message }),
+            JSON.stringify({ success: true }),
+            { status: 200,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+        );
+    } else {
+        // If either update failed, return a failure response including both errors if they exist.
+        let errorMessage = '';
+        if (bannedUsersError) {
+            errorMessage += `Banned users table update/delete failed: ${bannedUsersError.message}. `;
+        }
+        if (profileUpdateError) {
+            errorMessage += `Profiles table role update failed: ${profileUpdateError.message}.`;
+        }
+        console.error('Overall update failed:', errorMessage);
+        return new Response(
+            JSON.stringify({ success: false, error: errorMessage.trim() }),
             {
                 status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -124,19 +211,14 @@ serve(async (req) => {
         );
     }
 
-    console.log('Role update successful.');
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-
   } catch (error: any) {
-    console.error('Edge function execution error:', error);
+    console.error('General Edge function execution error:', error);
+    // Safely access error message
+    const errorMessage = (error instanceof Error) ? error.message : (typeof error === 'object' && error !== null && 'message' in error) ? (error as any).message : 'An unexpected error occurred';
     return new Response(
-      JSON.stringify({ success: false, error: error.message || 'An unexpected error occurred' }),
-      { status: 500,
+      JSON.stringify({ success: false, error: errorMessage }),
+      { 
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );

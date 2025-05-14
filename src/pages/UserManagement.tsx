@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { UserRole } from '@/contexts/AuthContext';
-import { useUserProfiles } from '@/hooks/useUsers';
+import { useUserProfiles, useUpdateUserRole } from '@/hooks/useUsers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import UserPermissionsManager from '@/components/users/UserPermissionsManager';
 import { Settings, Users, RefreshCw } from 'lucide-react';
@@ -22,10 +22,12 @@ import {
 } from '@/components/ui/navigation-menu';
 import { Link } from 'react-router-dom';
 import AppHeader from '@/components/AppHeader';
+import { Switch } from '@/components/ui/switch';
 
 const UserManagement = () => {
   const { profiles, loading, refresh } = useUserProfiles();
-  const { signOut, isAdmin } = useAuth();
+  const { signOut, isAdmin, user: currentUser } = useAuth();
+  const { updateRole, updating } = useUpdateUserRole();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
   const [selectedUserRole, setSelectedUserRole] = useState<UserRole>('user');
@@ -102,13 +104,14 @@ const UserManagement = () => {
                   <TableHead>Role</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Last Sign In</TableHead>
+                  <TableHead>Block</TableHead>
                   <TableHead>Permissions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {profiles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={7} className="text-center py-8">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -124,6 +127,28 @@ const UserManagement = () => {
                       </TableCell>
                       <TableCell>{formatDate(user.created_at)}</TableCell>
                       <TableCell>{formatDate(user.last_sign_in)}</TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={user.is_banned}
+                          onCheckedChange={async (isChecked) => {
+                            if (currentUser?.id === user.id) {
+                              toast.error("You cannot block your own account.");
+                              refresh();
+                              return;
+                            }
+                            const newRole: UserRole = isChecked ? 'blocked' : 'user';
+                            const success = await updateRole(user.id, newRole);
+                            if (success) {
+                              toast.success(`User ${isChecked ? 'blocked' : 'unblocked'} successfully`);
+                              refresh();
+                            } else {
+                              refresh();
+                            }
+                          }}
+                          disabled={currentUser?.id === user.id || updating}
+                          aria-label={user.is_banned ? 'Unblock user' : 'Block user'}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Button 
                           variant="outline" 
