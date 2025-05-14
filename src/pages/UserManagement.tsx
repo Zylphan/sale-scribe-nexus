@@ -117,7 +117,7 @@ const UserManagement = () => {
                   </TableRow>
                 ) : (
                   profiles.map(user => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={user.role === 'blocked' ? 'bg-red-50' : ''}>
                       <TableCell className="font-medium">{user.full_name || 'No name'}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
