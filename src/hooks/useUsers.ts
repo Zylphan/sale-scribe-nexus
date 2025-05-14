@@ -159,17 +159,28 @@ export function useUpdateUserRole() {
   const updateRole = async (userId: string, role: UserRole) => {
     try {
       setUpdating(true);
+      console.log('Updating role for user:', userId, 'to role:', role);
       
       const { data, error } = await supabase.functions.invoke('update-user-role', {
         body: { userId, role }
       });
       
+      console.log('Edge function response:', { data, error });
+      
       if (error) {
+        console.error('Edge function error:', error);
         throw error;
       }
       
       if (!data?.success) {
+        console.error('Edge function returned unsuccessful response:', data);
         throw new Error('Failed to update user role');
+      }
+      
+      // Refresh the user's session to get updated metadata
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Error refreshing session:', refreshError);
       }
       
       return true;

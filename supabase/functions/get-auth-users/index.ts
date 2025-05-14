@@ -25,8 +25,10 @@ serve(async (req) => {
     
     // Get the request body
     const { userId, role } = await req.json();
+    console.log('Received role update request:', { userId, role });
     
     if (!userId || !role) {
+      console.error('Missing required fields:', { userId, role });
       return new Response(
         JSON.stringify({ error: 'Missing required fields: userId and role' }),
         { 
@@ -36,8 +38,22 @@ serve(async (req) => {
       );
     }
     
+    // Validate role value
+    const validRoles = ['admin', 'user', 'blocked'];
+    if (!validRoles.includes(role)) {
+      console.error('Invalid role value:', role);
+      return new Response(
+        JSON.stringify({ error: Invalid role value. Must be one of: ${validRoles.join(', ')} }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
     // Update the user's metadata in auth.users
-    const { error: authError } = await supabase.auth.admin.updateUserById(
+    console.log('Updating user auth metadata...');
+    const { data: authData, error: authError } = await supabase.auth.admin.updateUserById(
       userId,
       { user_metadata: { role } }
     );
@@ -52,12 +68,16 @@ serve(async (req) => {
         }
       );
     }
+    console.log('Auth metadata updated successfully:', authData);
     
     // Update the role in the profiles table
-    const { error: profileError } = await supabase
+    console.log('Updating user profile...');
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .update({ role })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select()
+      .single();
     
     if (profileError) {
       console.error('Error updating user profile:', profileError);
@@ -69,9 +89,16 @@ serve(async (req) => {
         }
       );
     }
+    console.log('Profile updated successfully:', profileData);
     
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true,
+        data: {
+          auth: authData,
+          profile: profileData
+        }
+      }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
