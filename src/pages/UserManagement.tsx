@@ -3,10 +3,6 @@ import {
   Table, TableBody, TableCaption, TableCell,
   TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
-import { 
-  Select, SelectContent, SelectItem,
-  SelectTrigger, SelectValue 
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -15,11 +11,13 @@ import { UserRole } from '@/contexts/AuthContext';
 import { useUserProfiles, useUpdateUserRole } from '@/hooks/useUsers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import UserPermissionsManager from '@/components/users/UserPermissionsManager';
-import { Settings, Users, RefreshCw } from 'lucide-react';
+import { Settings, Users, RefreshCw, Ban, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const UserManagement = () => {
   const { profiles, loading, refresh } = useUserProfiles();
   const { updateRole, updating } = useUpdateUserRole();
+  const { profile: currentUserProfile } = useAuth();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
@@ -46,10 +44,24 @@ const UserManagement = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, role: UserRole) => {
-    const success = await updateRole(userId, role);
+  const handleBlockToggle = async (userId: string, currentRole: UserRole) => {
+    // Only allow admins to block/unblock users
+    if (currentUserProfile?.role !== 'admin') {
+      toast.error('Only administrators can block or unblock users');
+      return;
+    }
+
+    // Prevent blocking other admins
+    const targetUser = profiles.find(p => p.id === userId);
+    if (targetUser?.role === 'admin') {
+      toast.error('Cannot block other administrators');
+      return;
+    }
+
+    const newRole: UserRole = currentRole === 'blocked' ? 'user' : 'blocked';
+    const success = await updateRole(userId, newRole);
     if (success) {
-      toast.success(User role updated successfully to ${role});
+      toast.success(User ${newRole === 'blocked' ? 'blocked' : 'unblocked'} successfully);
       await refresh();
     }
   };
@@ -115,7 +127,7 @@ const UserManagement = () => {
                 <TableHead>Role</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Last Sign In</TableHead>
-                <TableHead>Role Actions</TableHead>
+                <TableHead>Actions</TableHead>
                 <TableHead>Permissions</TableHead>
               </TableRow>
             </TableHeader>
@@ -139,20 +151,26 @@ const UserManagement = () => {
                     <TableCell>{formatDate(user.created_at)}</TableCell>
                     <TableCell>{formatDate(user.last_sign_in)}</TableCell>
                     <TableCell>
-                      <Select
-                        defaultValue={user.role}
-                        onValueChange={(value) => handleRoleChange(user.id, value as UserRole)}
-                        disabled={updating}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Change role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="blocked">Blocked</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {currentUserProfile?.role === 'admin' && user.role !== 'admin' && (
+                        <Button
+                          variant={user.role === 'blocked' ? 'default' : 'destructive'}
+                          size="sm"
+                          onClick={() => handleBlockToggle(user.id, user.role)}
+                          disabled={updating}
+                        >
+                          {user.role === 'blocked' ? (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Unblock
+                            </>
+                          ) : (
+                            <>
+                              <Ban className="h-4 w-4 mr-2" />
+                              Block
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Button 
