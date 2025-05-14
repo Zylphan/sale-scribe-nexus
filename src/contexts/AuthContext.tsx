@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,72 +36,128 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const fetchUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
+      if (error) throw error;
+
+      // Handle blocked users
+      if (data.role === 'blocked') {
+        toast.error("Your account has been blocked. Please contact an administrator.");
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        navigate('/login');
+        return;
+      }
+
+      setProfile(data);
+
+      // Update the last sign-in time
+      await supabase
+        .from('profiles')
+        .update({ last_sign_in: new Date().toISOString() })
+        .eq('id', userId);
+    } catch (error) {
       console.error("Error fetching user profile:", error);
-      return;
+      toast.error("Failed to fetch user profile.");
     }
-
-    // Handle blocked users
-    if (data.role === 'blocked') {
-      toast.error("Your account has been blocked. Please contact an administrator.");
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      navigate('/login');
-      return;
-    }
-
-    setProfile(data);
-
-    // Update the last sign-in time
-    await supabase
-      .from('profiles')
-      .update({ last_sign_in: new Date().toISOString() })
-      .eq('id', userId);
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+        try {
+          setSession(session);
+          setUser(session?.user ?? null);
 
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
+          if (session?.user) {
+            await fetchUserProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
 
-        if (event === 'SIGNED_OUT') {
-          toast.info("Signed out");
-          navigate('/login');
+          if (event === 'SIGNED_OUT') {
+            toast.info("Signed out");
+            navigate('/login');
+          }
+        } catch (error) {
+          console.error("Error handling auth state change:", error);
         }
       }
     );
 
     // Check for existing session on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      try {
+        setSession(session);
+        setUser(session?.user ?? null);
 
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        }
+      } catch (error) {
+        console.error("Error fetching initial session:", error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
   const isAdmin = () => profile?.role === 'admin';
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Sign-in error:", error);
+      toast.error("Failed to sign in.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, fullName: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Sign-up error:", error);
+      toast.error("Failed to sign up.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+    } catch (error) {
+      console.error("Sign-out error:", error);
+      toast.error("Failed to sign out.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ session, user, profile, loading, signIn, signUp, signOut, isAdmin }}>
