@@ -155,7 +155,7 @@ export function useUserProfiles() {
 
 export function useUpdateUserRole() {
   const [updating, setUpdating] = useState(false);
-  
+
   const updateRole = async (userId: string, role: UserRole) => {
     if (!userId || !role) {
       console.error('Invalid parameters:', { userId, role });
@@ -166,56 +166,51 @@ export function useUpdateUserRole() {
     try {
       setUpdating(true);
       console.log('Updating role for user:', userId, 'to role:', role);
-      
-      // First verify the user exists
+
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', userId)
         .single();
-        
+
       if (userError || !userData) {
         console.error('Error verifying user:', userError);
         toast.error('User not found');
         return false;
       }
-      
-      // Call the edge function to update the role
+
       const { data, error } = await supabase.functions.invoke('update-user-role', {
-        body: { userId, role }
+        body: { userId, role },
       });
-      
+
       console.log('Edge function response:', { data, error });
-      
+
       if (error) {
         console.error('Edge function error:', error);
-        throw error;
+        toast.error(`Failed to update user role: ${error.message}`);
+        return false;
       }
-      
+
       if (!data?.success) {
         console.error('Edge function returned unsuccessful response:', data);
-        throw new Error('Failed to update user role');
+        toast.error('Failed to update user role');
+        return false;
       }
-      
-      // Refresh the user's session to get updated metadata
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.error('Error refreshing session:', refreshError);
-        // Don't fail the operation if refresh fails
-      }
-      
-      // Force a reload of the user profiles
-      window.location.reload();
-      
+
+      await supabase.auth.refreshSession(); // Optional: handle error separately if needed
+
+      toast.success('User role updated successfully');
+      window.location.reload(); // Or: call onPermissionsUpdate() if you want to refresh only locally
+
       return true;
     } catch (error: any) {
       console.error('Error updating user role:', error);
-      toast.error(Failed to update user role: ${error.message});
+      toast.error(`Failed to update user role: ${error.message}`);
       return false;
     } finally {
       setUpdating(false);
     }
   };
-  
+
   return { updateRole, updating };
 }
