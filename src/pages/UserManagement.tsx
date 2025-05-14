@@ -50,10 +50,19 @@ const UserManagement = () => {
     const success = await updateRole(userId, role);
     if (success) {
       toast.success(`User role updated successfully to ${role}`);
+      if (role === 'blocked') {
+        toast.warning('The user has been blocked and will no longer have access.');
+      }
+    } else {
+      toast.error('Failed to update the user role. Please try again.');
     }
   };
   
-  const openPermissionsDialog = (userId: string, userName: string) => {
+  const openPermissionsDialog = (userId: string, userName: string, role: UserRole) => {
+    if (role === 'blocked') {
+      toast.error('Cannot edit permissions for a blocked user.');
+      return;
+    }
     setSelectedUserId(userId);
     setSelectedUserName(userName || 'User');
     setIsPermissionsDialogOpen(true);
@@ -157,7 +166,8 @@ const UserManagement = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => openPermissionsDialog(user.id, user.full_name || '')}
+                        onClick={() => openPermissionsDialog(user.id, user.full_name || '', user.role)}
+                        disabled={user.role === 'blocked'}
                       >
                         <Settings className="h-4 w-4 mr-2" />
                         Permissions
