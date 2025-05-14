@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -52,7 +51,7 @@ export function useUserCount() {
         }
       } catch (error: any) {
         console.error("Error fetching user count:", error.message);
-        toast.error(`Error fetching user count: ${error.message}`);
+        toast.error(Error fetching user count: ${error.message});
         
         // Fallback to at least counting the current user
         const { data: { session } } = await supabase.auth.getSession();
@@ -141,7 +140,7 @@ export function useUserProfiles() {
         setProfiles(data || []);
       } catch (error: any) {
         console.error('Error fetching user profiles:', error);
-        toast.error(`Error fetching user profiles: ${error.message}`);
+        toast.error(Error fetching user profiles: ${error.message});
         setProfiles([]);
       } finally {
         setLoading(false);
@@ -161,19 +160,22 @@ export function useUpdateUserRole() {
     try {
       setUpdating(true);
       
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', userId);
+      const { data, error } = await supabase.functions.invoke('update-user-role', {
+        body: { userId, role }
+      });
       
       if (error) {
         throw error;
       }
       
+      if (!data?.success) {
+        throw new Error('Failed to update user role');
+      }
+      
       return true;
     } catch (error: any) {
       console.error('Error updating user role:', error);
-      toast.error(`Failed to update user role: ${error.message}`);
+      toast.error(Failed to update user role: ${error.message});
       return false;
     } finally {
       setUpdating(false);

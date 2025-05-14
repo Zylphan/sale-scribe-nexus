@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.29.0";
 
@@ -24,13 +23,46 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Get all users from auth.users
-    const { data: users, error } = await supabase.auth.admin.listUsers();
+    // Get the request body
+    const { userId, role } = await req.json();
     
-    if (error) {
-      console.error('Error fetching users:', error);
+    if (!userId || !role) {
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: 'Missing required fields: userId and role' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    // Update the user's metadata in auth.users
+    const { error: authError } = await supabase.auth.admin.updateUserById(
+      userId,
+      { user_metadata: { role } }
+    );
+    
+    if (authError) {
+      console.error('Error updating user auth metadata:', authError);
+      return new Response(
+        JSON.stringify({ error: authError.message }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    // Update the role in the profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', userId);
+    
+    if (profileError) {
+      console.error('Error updating user profile:', profileError);
+      return new Response(
+        JSON.stringify({ error: profileError.message }),
         { 
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -39,7 +71,7 @@ serve(async (req) => {
     }
     
     return new Response(
-      JSON.stringify({ users: users.users }),
+      JSON.stringify({ success: true }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
