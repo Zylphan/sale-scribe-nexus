@@ -21,7 +21,12 @@ serve(async (req) => {
       throw new Error('Missing environment variables for Supabase client');
     }
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
     
     // Get the request body
     const { userId, role } = await req.json();
@@ -50,27 +55,8 @@ serve(async (req) => {
         }
       );
     }
-    
-    // Update the user's metadata in auth.users
-    console.log('Updating user auth metadata...');
-    const { data: authData, error: authError } = await supabase.auth.admin.updateUserById(
-      userId,
-      { user_metadata: { role } }
-    );
-    
-    if (authError) {
-      console.error('Error updating user auth metadata:', authError);
-      return new Response(
-        JSON.stringify({ error: authError.message }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-    console.log('Auth metadata updated successfully:', authData);
-    
-    // Update the role in the profiles table
+
+    // First update the profiles table
     console.log('Updating user profile...');
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
@@ -90,6 +76,34 @@ serve(async (req) => {
       );
     }
     console.log('Profile updated successfully:', profileData);
+
+    // Then update the user's metadata in auth.users
+    console.log('Updating user auth metadata...');
+    const { data: authData, error: authError } = await supabase.auth.admin.updateUserById(
+      userId,
+      { 
+        user_metadata: { role },
+        app_metadata: { role } // Also update app_metadata for consistency
+      }
+    );
+    
+    if (authError) {
+      // If auth update fails, try to revert the profile update
+      console.error('Error updating user auth metadata:', authError);
+      await supabase
+        .from('profiles')
+        .update({ role: profileData.role }) // Revert to previous role
+        .eq('id', userId);
+        
+      return new Response(
+        JSON.stringify({ error: authError.message }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    console.log('Auth metadata updated successfully:', authData);
     
     return new Response(
       JSON.stringify({ 

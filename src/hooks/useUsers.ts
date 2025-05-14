@@ -157,10 +157,30 @@ export function useUpdateUserRole() {
   const [updating, setUpdating] = useState(false);
   
   const updateRole = async (userId: string, role: UserRole) => {
+    if (!userId || !role) {
+      console.error('Invalid parameters:', { userId, role });
+      toast.error('Invalid user or role');
+      return false;
+    }
+
     try {
       setUpdating(true);
       console.log('Updating role for user:', userId, 'to role:', role);
       
+      // First verify the user exists
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+        
+      if (userError || !userData) {
+        console.error('Error verifying user:', userError);
+        toast.error('User not found');
+        return false;
+      }
+      
+      // Call the edge function to update the role
       const { data, error } = await supabase.functions.invoke('update-user-role', {
         body: { userId, role }
       });
@@ -181,7 +201,11 @@ export function useUpdateUserRole() {
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         console.error('Error refreshing session:', refreshError);
+        // Don't fail the operation if refresh fails
       }
+      
+      // Force a reload of the user profiles
+      window.location.reload();
       
       return true;
     } catch (error: any) {
