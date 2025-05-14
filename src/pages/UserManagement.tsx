@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   Table, TableBody, TableCaption, TableCell,
@@ -19,7 +18,7 @@ import UserPermissionsManager from '@/components/users/UserPermissionsManager';
 import { Settings, Users, RefreshCw } from 'lucide-react';
 
 const UserManagement = () => {
-  const { profiles, loading } = useUserProfiles();
+  const { profiles, loading, refresh } = useUserProfiles();
   const { updateRole, updating } = useUpdateUserRole();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
@@ -50,7 +49,8 @@ const UserManagement = () => {
   const handleRoleChange = async (userId: string, role: UserRole) => {
     const success = await updateRole(userId, role);
     if (success) {
-      toast.success(`User role updated successfully to ${role}`);
+      toast.success(User role updated successfully to ${role});
+      await refresh();
     }
   };
   
@@ -97,7 +97,7 @@ const UserManagement = () => {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-lg font-medium">All Users</h2>
-          <Button onClick={() => window.location.reload()} disabled={loading}>
+          <Button onClick={refresh} disabled={loading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             {loading ? 'Loading...' : 'Refresh'}
           </Button>
