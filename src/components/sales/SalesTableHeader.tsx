@@ -45,8 +45,8 @@ const SalesTableHeader = ({
       <TableRow>
         <TableHead>{renderSortableHeader("Order ID", "transno")}</TableHead>
         <TableHead>{renderSortableHeader("Date", "salesdate")}</TableHead>
-        <TableHead>{renderSortableHeader("Customer Name", "custno")}</TableHead>
-        <TableHead>{renderSortableHeader("Employee Name", "empno")}</TableHead>
+        <TableHead>{renderSortableHeader("Customer ID", "custno")}</TableHead>
+        <TableHead>{renderSortableHeader("Employee ID", "empno")}</TableHead>
         <TableHead className="text-right">Actions</TableHead>
       </TableRow>
     </TableHeader>
