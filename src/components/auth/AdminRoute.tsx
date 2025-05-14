@@ -1,4 +1,3 @@
-
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -19,7 +18,6 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   
   if (!profile || !isAdmin()) {
     console.log("AdminRoute - Not an admin, redirecting to dashboard");
-    // Redirect to dashboard with access denied message
     toast.error("Access denied. Admin privileges required.");
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
