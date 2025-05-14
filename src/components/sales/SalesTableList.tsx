@@ -1,9 +1,8 @@
-
-import { TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Sale } from '@/hooks/types/sales';
 import { format } from 'date-fns';
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pen, Trash } from 'lucide-react';
+import { Sale } from '@/hooks/types/sales';
 
 interface SalesTableListProps {
   sales: Sale[];
@@ -11,8 +10,8 @@ interface SalesTableListProps {
   onViewDetails: (transno: string) => void;
   onEditSale: (transno: string) => void;
   onDeleteSale: (transno: string) => void;
-  canEdit: boolean;
-  canDelete: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 const SalesTableList = ({
@@ -21,86 +20,82 @@ const SalesTableList = ({
   onViewDetails,
   onEditSale,
   onDeleteSale,
-  canEdit,
-  canDelete
+  canEdit = true,
+  canDelete = true
 }: SalesTableListProps) => {
+  
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return '';
+    if (!dateString) return 'No date';
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
     } catch (e) {
-      console.error('Invalid date format:', dateString, e);
       return 'Invalid date';
     }
   };
-
+  
   if (loading) {
     return (
       <TableBody>
         <TableRow>
-          <TableCell colSpan={5} className="text-center py-8">
+          <TableCell colSpan={5} className="text-center py-10">
             Loading sales data...
           </TableCell>
         </TableRow>
       </TableBody>
     );
   }
-
+  
   if (sales.length === 0) {
     return (
       <TableBody>
         <TableRow>
-          <TableCell colSpan={5} className="text-center py-8">
-            No sales found
+          <TableCell colSpan={5} className="text-center py-10">
+            No sales found. Try adjusting your search criteria.
           </TableCell>
         </TableRow>
       </TableBody>
     );
   }
-
+  
   return (
     <TableBody>
       {sales.map((sale) => (
         <TableRow key={sale.transno}>
           <TableCell className="font-medium">{sale.transno}</TableCell>
           <TableCell>{formatDate(sale.salesdate)}</TableCell>
-          <TableCell>{sale.customer?.custname || 'Unknown'}</TableCell>
+          <TableCell>{sale.custno || 'No customer'}</TableCell>
+          <TableCell>{sale.empno || 'No employee'}</TableCell>
           <TableCell>
-            {sale.employee ? 
-              `${sale.employee.firstname || ''} ${sale.employee.lastname || ''}`.trim() || 'Unknown' 
-              : 'Unknown'}
-          </TableCell>
-          <TableCell className="text-right space-x-2">
-            <div className="flex justify-end space-x-2">
+            <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onViewDetails(sale.transno)}
-                title="View Details"
               >
                 <Eye className="h-4 w-4" />
+                <span className="sr-only">View</span>
               </Button>
-
+              
               {canEdit && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onEditSale(sale.transno)}
-                  title="Edit Sale"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pen className="h-4 w-4" />
+                  <span className="sr-only">Edit</span>
                 </Button>
               )}
-
+              
               {canDelete && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="text-red-500 hover:bg-red-50"
                   onClick={() => onDeleteSale(sale.transno)}
-                  title="Delete Sale"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash className="h-4 w-4" />
+                  <span className="sr-only">Delete</span>
                 </Button>
               )}
             </div>
