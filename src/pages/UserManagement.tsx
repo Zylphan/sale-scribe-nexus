@@ -62,7 +62,22 @@ const UserManagement = () => {
 
   return (
     <div className="container mx-auto py-10">
-      {/* New Admin Header */}
+      {/* Sales Management System Header */}
+      <div className="bg-gradient-to-r from-sales-primary/90 to-sales-primary p-6 rounded-lg shadow-lg mb-8 text-white">
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Sales Management System</h1>
+            <p className="mt-2 text-white/80">Managing your sales team and performance</p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <span className="inline-block bg-white/20 px-4 py-2 rounded-full text-sm">
+              Admin Control Panel
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Admin Header */}
       <div className="mb-8 border-b pb-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">

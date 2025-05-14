@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Session, User } from '@supabase/supabase-js';
@@ -54,6 +53,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       console.log("Profile fetched:", data);
+      
+      // If user is blocked, sign them out immediately
+      if (data.role === 'blocked') {
+        toast.error("Your account has been blocked. Please contact an administrator.");
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        navigate('/login');
+        return;
+      }
+      
       setProfile(data);
       
       // Update last_sign_in time
@@ -65,15 +76,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (updateError) {
         console.error("Error updating last sign in time:", updateError);
       }
-      
-      // If user is blocked, sign them out immediately
-      if (data.role === 'blocked') {
-        toast("Account Blocked", {
-          description: "Your account has been blocked. Please contact an administrator."
-        });
-        await supabase.auth.signOut();
-        return;
-      }
     } catch (error) {
       console.error("Error in fetchUserProfile:", error);
     }
@@ -84,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("AuthProvider - Auth state changed:", event);
         setSession(session);
         setUser(session?.user ?? null);
@@ -92,17 +94,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Only fetch profile on sign in or session refresh
         if (session?.user) {
           // Use setTimeout to avoid potential deadlocks with Supabase auth
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
+          setTimeout(async () => {
+            await fetchUserProfile(session.user.id);
           }, 0);
         } else {
           setProfile(null);
         }
         
         if (event === 'SIGNED_IN') {
-          toast("Success", {
-            description: "Signed in successfully"
-          });
+          toast.success("Signed in successfully");
           
           // Use setTimeout to avoid potential deadlocks with Supabase auth
           setTimeout(() => {
@@ -112,9 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             navigate(from, { replace: true });
           }, 0);
         } else if (event === 'SIGNED_OUT') {
-          toast("Info", {
-            description: "Signed out"
-          });
+          toast.info("Signed out");
           setTimeout(() => {
             console.log("AuthProvider - Redirecting after sign out to: /login");
             navigate('/login');
@@ -125,14 +123,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // THEN check for existing session
     console.log("AuthProvider - Checking for existing session");
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log("AuthProvider - Session check result:", { hasSession: !!session });
       setSession(session);
       setUser(session?.user ?? null);
       
       // Fetch profile if user is logged in
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user.id);
       }
       
       setLoading(false);

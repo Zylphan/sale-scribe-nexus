@@ -2,6 +2,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,6 +13,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
   
   console.log("ProtectedRoute - Auth state:", { user: user?.id, loading, profile });
+  
+  useEffect(() => {
+    // Additional check for blocked users
+    if (profile?.role === 'blocked') {
+      console.log("ProtectedRoute - User is blocked, will redirect to login");
+      toast.error('Your account has been blocked. Please contact an administrator.');
+    }
+  }, [profile]);
   
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
