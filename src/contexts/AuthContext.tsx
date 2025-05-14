@@ -110,8 +110,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Cleanup function to unsubscribe
     return () => {
-      if (subscription) {
-        subscription.unsubscribe(); // Ensure `subscription` exists before calling `unsubscribe`
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe();
       }
     };
   }, [navigate]);
