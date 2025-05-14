@@ -76,71 +76,71 @@ export function useUserProfiles() {
       setLoading(true);
       console.log("Fetching user profiles...");
       
-      // First try to get users from the auth API via edge function
-      try {
-        const { data: authUsersData, error: authError } = await supabase.functions.invoke('get-auth-users');
-        
-        if (authError) {
-          console.error("Error fetching auth users:", authError);
-          throw authError;
-        }
-        
-        if (authUsersData && Array.isArray(authUsersData.users)) {
-          console.log("Fetched auth users:", authUsersData.users.length);
-          
-          // Now get profiles from the profiles table
-          const { data: profilesData, error: profilesError } = await supabase
+      // Call the new Edge Function to get auth users
+      const { data: authUsersData, error: authError } = await supabase.functions.invoke('list-auth-users');
+      
+      if (authError) {
+        console.error("Error fetching auth users:", authError);
+        throw authError;
+      }
+      
+      if (!authUsersData || !Array.isArray(authUsersData.users)) {
+        console.error("Invalid data from list-auth-users function:", authUsersData);
+        // Fallback to just fetching profiles if auth users data is bad
+        console.log("Falling back to profiles table only due to bad auth users data");
+         const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
-            .select('*');
-            
-          if (profilesError) {
-            console.error("Error fetching profiles:", profilesError);
-            throw profilesError;
-          }
+            .select('id, email, full_name, role, created_at, last_sign_in')
+            .order('created_at', { ascending: false });
 
-          // Build a map of profiles by user ID for quick lookup
-          const profileMap = new Map();
-          (profilesData || []).forEach(profile => {
-            profileMap.set(profile.id, profile);
-          });
-          
-          // Combine the data, using profile data when available
-          const combinedProfiles = authUsersData.users.map(user => {
-            const profile = profileMap.get(user.id);
-            return {
-              id: user.id,
-              email: user.email,
-              full_name: profile?.full_name || user.user_metadata?.full_name || null,
-              role: profile?.role || 'user',
-              created_at: user.created_at || new Date().toISOString(),
-              last_sign_in: profile?.last_sign_in || null
-            };
-          });
-          
-          setProfiles(combinedProfiles);
-          return;
-        }
-      } catch (fnError) {
-        console.error("Edge function error:", fnError);
+          if (profilesError) {
+             console.error("Error fetching profiles in fallback:", profilesError);
+             toast.error(`Error fetching profiles fallback: ${profilesError.message}`);
+             throw profilesError;
+           }
+           setProfiles(profilesData || []);
+           return;
       }
+
+      console.log("Fetched auth users:", authUsersData.users.length);
       
-      // Fallback: Just get from profiles table
-      console.log("Falling back to profiles table only");
-      const { data, error } = await supabase
+      // Now get profiles from the profiles table
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
+        .select('id, email, full_name, role, created_at, last_sign_in');
+        
+      if (profilesError) {
+        console.error("Error fetching profiles after auth users fetch:", profilesError);
+        toast.error(`Error fetching profiles: ${profilesError.message}`);
+        throw profilesError;
       }
+
+      // Build a map of profiles by user ID for quick lookup
+      const profileMap = new Map();
+      (profilesData || []).forEach(profile => {
+        profileMap.set(profile.id, profile);
+      });
       
-      console.log("Fetched profiles:", data);
-      setProfiles(data || []);
+      // Combine the data, using profile data when available
+      const combinedProfiles = authUsersData.users.map(user => {
+        const profile = profileMap.get(user.id);
+        return {
+          id: user.id,
+          email: user.email,
+          full_name: profile?.full_name || user.user_metadata?.full_name || null,
+          // Explicitly take role from profile data, fallback to auth user metadata, then default
+          role: profile?.role || (user.user_metadata as any)?.role || 'user',
+          created_at: profile?.created_at || user.created_at || new Date().toISOString(),
+          last_sign_in: profile?.last_sign_in || user.last_sign_in || null
+        };
+      });
+      
+      setProfiles(combinedProfiles);
+      
     } catch (error: any) {
-      console.error('Error fetching user profiles:', error);
+      console.error('Error fetching user profiles (overall):', error);
       toast.error(`Error fetching user profiles: ${error.message}`);
-      setProfiles([]);
+      setProfiles([]); // Clear profiles on error
     } finally {
       setLoading(false);
     }
@@ -167,19 +167,6 @@ export function useUpdateUserRole() {
       setUpdating(true);
       console.log('Updating role for user:', userId, 'to role:', role);
       
-      // First verify the user exists
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-        
-      if (userError || !userData) {
-        console.error('Error verifying user:', userError);
-        toast.error('User not found');
-        return false;
-      }
-      
       // Call the edge function to update the role
       const { data, error } = await supabase.functions.invoke('update-user-role', {
         body: { userId, role }
@@ -204,7 +191,7 @@ export function useUpdateUserRole() {
         // Don't fail the operation if refresh fails
       }
       
-      // Force a reload of the user profiles
+      // Force a reload of the user profiles in the UI
       window.location.reload();
       
       return true;
